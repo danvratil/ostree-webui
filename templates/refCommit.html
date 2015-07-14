@@ -1,0 +1,28 @@
+$def with (ref, rev, parentRev, commit, diff)
+
+<h1>Commit $commit.rev</h1>
+<strong>Date:</strong> $:datestr(commit.date)<br/>
+$if parentRev:
+    <strong>Parent:</strong> <a href="?ref=$ref&amp;a=commit&amp;rev=$parentRev">$parentRev</a><br/>
+<br/>
+<pre>
+$commit.message
+Name: $commit.name
+Arch: $commit.arch
+Branch: $commit.branch
+</pre>
+
+<br/>
+
+<h2>Diff:</h2>
+<pre>
+$for d in diff:
+    <span style="color: 
+    $if d.startswith('A'):
+        green
+    $elif d.startswith('M'):
+        blue
+    $else:
+        red
+    ">$d</span>
+</pre>

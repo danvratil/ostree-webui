@@ -1,0 +1,15 @@
+$def with (refs)
+
+<table>
+<tr>
+<th>Ref</th>
+<th>Actions</th>
+</tr>
+
+$for ref in refs:
+    <tr><td><a href="?ref=$ref">$ref</a></td>
+        <td><a href="?ref=$ref&amp;a=log">Log</a>
+            <a href="?ref=$ref&amp;a=browse">Browse</a>
+        </td>
+    </tr>
+</table>
