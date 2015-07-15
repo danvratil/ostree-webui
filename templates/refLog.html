@@ -2,14 +2,7 @@
 
 <%! from time import strftime as time %>
 
-% if page.metadata.has_section('Application'):
-    <%include file="refSummary_application.html"/>
-% elif page.metadata.has_section('Runtime'):
-    <h1>${page.metadata.get('Runtime', 'runtime')}</h1>
-    <em>SDK:</em> ${page.metadata.get('Runtime', 'sdk')}
-% endif
-
-<h2>Log</h2>
+<h1>Log</h1>
 <table>
 <tr><th>Revision</th>
     <th>Message</th>

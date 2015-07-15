@@ -57,17 +57,26 @@ class Page:
     def __init__(self, dummy = None):
         self.title = config.get('General', 'title')
         self.logo = config.get('General', 'logo')
+        self.breadcrumbs = []
 
         self.ref = None
         self.action = None
         self.rev = None
         self.path = None
 
+
+class Breadcrumb:
+    def __init__(self, url, title):
+        self.url = url
+        self.title = title
+
+
 class App:
     def GET(self):
         query = urlparse.parse_qs(web.ctx.query[1:])
 
         page = Page()
+        page.breadcrumbs.append(Breadcrumb('/', 'repo'))
 
         if 'ref' in query:
             page.ref = query['ref'][0]
@@ -81,7 +90,9 @@ class App:
         if not page.ref:
             return self._listRefs(page);
         else:
-            if not page.action:
+            page.breadcrumbs.append(Breadcrumb('?ref=%s' % page.ref, page.ref))
+
+            if not page.action or page.action == 'summary':
                 return self._refSummary(page)
             else:
                 if page.action == 'log':
@@ -108,6 +119,8 @@ class App:
         return render.refs(page = page)
 
     def _refSummary(self, page):
+        page.breadcrumbs.append(Breadcrumb(None, 'summary'))
+
         ''' Resolve HEAD rev for current ref'''
         page.rev, err = self._ostree(['rev-parse', page.ref])
 
@@ -124,7 +137,17 @@ class App:
 
         return render.refSummary(page = page)
 
+    def _refLog(self, page):
+        page.breadcrumbs.append(Breadcrumb(None, 'log'))
+
+        rawlog, err = self._ostree(['log', page.ref])
+        page.log = OSTreeLog(rawlog.split('\n'))
+
+        return render.refLog(page = page)
+
     def _refCommit(self, page):
+        page.breadcrumbs.append(Breadcrumb(None, 'commit'))
+
         commit, err = self._ostree(['show', page.rev])
         page.commit = OSTreeLog(commit.split('\n')).next()
         page.parentRev, err = self._ostree(['rev-parse', page.rev + '^'])
@@ -135,6 +158,8 @@ class App:
         return render.refCommit(page = page)
 
     def _refBrowse(self, page):
+        page.breadcrumbs.append(Breadcrumb(None, 'tree'))
+
         ''' If no rev is provided, use HEAD of current ref '''
         if not page.rev:
             page.rev, err = self._ostree(['rev-parse', page.ref])

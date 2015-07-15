@@ -2,10 +2,41 @@
 <html lang="en">
 <head>
     <title>${page.title}</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+    <!-- Our style -->
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+<div class="container-fluid">
+  <div id="header">
+    <div id="logo">
+      <a href="/"><img src="/static/logo.png" alt="${page.title}" /></a>
+    </div>
+    % if page.ref:
+    <div id="title">
+      % for breadcrumb in page.breadcrumbs:
+         % if breadcrumb.url:
+            <a href="${breadcrumb.url}">${breadcrumb.title}</a>&nbsp;/&nbsp;
+         % else:
+            ${breadcrumb.title}&nbsp;/&nbsp;
+         % endif
+      % endfor
+    </div>
+    <nav>
+        <a href='?ref=${page.ref}&amp;a=summary'>summary</a> |
+        <a href='?ref=${page.ref}&amp;a=log'>log</a> |
+        <a href='?ref=${page.ref}&amp;a=browse'>browse</a>
+    </nav>
+    % endif
+</div>
 
 ${self.body()}
 
+</div>
 </body>
 </html>
