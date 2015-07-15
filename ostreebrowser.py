@@ -27,7 +27,7 @@ import ConfigParser
 import urlparse
 import StringIO
 
-from utils import *
+import ostree
 
 
 web.config.debug = True
@@ -70,10 +70,15 @@ class Breadcrumb:
         self.url = url
         self.title = title
 
+class AppBundle:
+    def __init__(self, ref):
+        pass
 
 class App:
     def GET(self):
         query = urlparse.parse_qs(web.ctx.query[1:])
+
+        self._repo = ostree.Repo(config.get('General', 'repo'))
 
         page = Page()
         page.breadcrumbs.append(Breadcrumb('/', 'repo'))
@@ -104,56 +109,43 @@ class App:
 
         return self._listRefs(page)
 
-    def _ostree(self, args):
-        p = subprocess.Popen(['ostree'] + args + ['--repo=%s' % config.get('General', 'repo')],
-                             stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-        print("Executed: %s" % (['ostree'] + args + ['--repo=%s' % config.get('General', 'repo')]))
-        out, err = p.communicate()
-        return out.decode('UTF-8').strip(), err.decode('UTF-8').strip()
-
     def _listRefs(self, page):
-        refs, err = self._ostree(['refs'])
-        page.refs = refs.split('\n')
-        page.refs.sort()
+        page.runtimes = []
+        page.apps = []
+        for ref in self._repo.refs():
+            if ref.startswith('runtime/'):
+                page.runtimes.append(ref)
+            else:
+                page.apps.append(AppBundle(ref))
 
         return render.refs(page = page)
 
     def _refSummary(self, page):
         page.breadcrumbs.append(Breadcrumb(None, 'summary'))
 
-        ''' Resolve HEAD rev for current ref'''
-        page.rev, err = self._ostree(['rev-parse', page.ref])
-
-        rawmetadata, err = self._ostree(['cat', page.rev, 'metadata'])
-        rawlog, err = self._ostree(['log', page.ref])
-        page.log = OSTreeLog(rawlog.split('\n'))
-
         metadatastring = StringIO.StringIO()
-        metadatastring.write(rawmetadata)
+        metadatastring.write(self._repo.cat(page.ref, '/metadata'))
         metadatastring.seek(0)
-
         page.metadata = ConfigParser.ConfigParser()
         page.metadata.readfp(metadatastring, 'metadata')
+
+        page.log = self._repo.log(page.ref)
 
         return render.refSummary(page = page)
 
     def _refLog(self, page):
         page.breadcrumbs.append(Breadcrumb(None, 'log'))
 
-        rawlog, err = self._ostree(['log', page.ref])
-        page.log = OSTreeLog(rawlog.split('\n'))
+        page.log = self._repo.log(page.ref)
 
         return render.refLog(page = page)
 
     def _refCommit(self, page):
         page.breadcrumbs.append(Breadcrumb(None, 'commit'))
 
-        commit, err = self._ostree(['show', page.rev])
-        page.commit = OSTreeLog(commit.split('\n')).next()
-        page.parentRev, err = self._ostree(['rev-parse', page.rev + '^'])
-
-        page.diff, err = self._ostree(['diff', page.rev])
-        page.diff = page.diff.split('\n')
+        page.commit = self._repo.show(page.rev)
+        page.parentRev = self._repo.revParse(page.rev + '^')
+        page.diff = self._repo.diff(page.rev)
 
         return render.refCommit(page = page)
 
@@ -162,13 +154,12 @@ class App:
 
         ''' If no rev is provided, use HEAD of current ref '''
         if not page.rev:
-            page.rev, err = self._ostree(['rev-parse', page.ref])
+            page.rev = page.ref
 
         if not page.path:
             page.path = '/'
 
-        listing, err = self._ostree(['ls', page.rev, page.path])
-        page.listing = OSTreeDirList(listing.split('\n'))
+        page.listing = self._repo.ls(page.rev, page.path)
 
         return render.refBrowse(page = page)
 
