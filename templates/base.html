@@ -18,27 +18,25 @@
     <div id="logo">
       <a href="/"><img src="/static/kde-logo.svg" alt="KDE App Bundlers Browser" width=64 height=64 /></a>
     </div>
-    % if page.ref:
-    <div id="title">
-      % for breadcrumb in page.breadcrumbs:
-          % if breadcrumb.url:
-          <a href="${breadcrumb.url}">${breadcrumb.title}</a>&nbsp;/&nbsp;
-          % else:
-          ${breadcrumb.title}&nbsp;/&nbsp;
-          % endif
-      % endfor
-    </div>
-    <nav>
-      <a href='?ref=${page.ref}&amp;a=summary'>summary</a> |
-      <a href='?ref=${page.ref}&amp;a=log'>log</a> |
-      <a href='?ref=${page.ref}&amp;a=browse'>browse</a>
-    </nav>
-    % else:
     <div id="title">KDE App Bundles Browser</div>
-    % endif
     <div class="clearfix"></div>
   </div>
 </div>
+%if page.ref:
+
+<%
+nav = [ [ 'summary', 'Summary' ],
+        [ 'log', 'Log' ],
+        [ 'browse', 'Browse' ] ]
+%>
+<nav>
+  <ul class="nav nav-tabs">
+  % for action in nav:
+    <li role="presentation" ${ 'class="active"' if page.action == action[0] else '' }><a href="?ref=${page.ref}&amp;a=${action[0]}">${action[1]}</a></li>
+  % endfor
+  </ul>
+</nav>
+%endif
 <div class="container-wrapper">
   <div class="container">
   ${self.body()}

@@ -24,6 +24,19 @@ body {
     margin: auto;
 }
 
+nav {
+    max-width: 1040px;
+    width: auto;
+    margin: auto;
+    font-size: 25px;
+    padding-top: 10px;
+}
+
+nav a {
+    font-size: 25px;
+}
+
+
 #logo {
     float: left;
 }

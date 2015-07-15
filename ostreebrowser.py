@@ -26,6 +26,7 @@ import ConfigParser
 import urlparse
 import os.path
 import magic
+import xml.etree.ElementTree as ET
 from magic import *
 from base64 import b64encode
 
@@ -69,6 +70,13 @@ class Page:
         self.rev = None
         self.path = None
 
+class Appdata:
+    def __init__(self):
+        self.name = None
+        self.description = None
+        self.homepage = None
+        self.help = None
+        self.images = []
 
 class Breadcrumb:
     def __init__(self, url, title):
@@ -174,6 +182,8 @@ class App:
         page.breadcrumbs.append(Breadcrumb(None, 'summary'))
 
         page.metadata = stringToConfig(self._repo.cat(page.ref, '/metadata'), 'metadata')
+        page.appdata = self._parseAppdata(page.ref)
+        page.bundle = AppBundle(page.ref)
         page.log = self._repo.log(page.ref)
 
         return render.refSummary(page = page)
@@ -207,6 +217,45 @@ class App:
         page.listing = self._repo.ls(page.rev, page.path)
 
         return render.refBrowse(page = page)
+
+
+    def _parseAppdata(self, ref):
+        ls = self._repo.ls(ref, '/files/share/appdata')
+        appdataFile = None
+        for l in ls:
+            if l.type == ostree.FileEntry.File:
+                if l.fileName.endswith('.appdata.xml'):
+                    appdataFile = l.filePath
+                    break
+
+        if not appdataFile:
+            return None
+
+        appdataXml = self._repo.cat(ref, appdataFile)
+        root = ET.fromstring(appdataXml)
+
+        appdata = Appdata()
+        for child in root:
+            if child.tag == 'name' and not child.attrib:
+                appdata.name = child.text
+            elif child.tag == 'description':
+                desc = ''
+                for par in child:
+                    if par.tag == 'p' and not par.attrib:
+                        desc += '<p>' + par.text + '</p>'
+                appdata.description = desc
+            elif child.tag == 'url' and child.attrib['type'] == 'homepage':
+                appdata.homepage = child.text
+            elif child.tag == 'url' and child.attrib['type'] == 'help':
+                appdata.help = child.text
+            elif child.tag == 'screenshots':
+                appdata.images = []
+                scrchots = child.findall('image')
+                for scrshot in scrchots:
+                    appdata.images.append(scrshot.text)
+
+        return appdata
+
 
 if __name__ == "__main__":
     app.run()

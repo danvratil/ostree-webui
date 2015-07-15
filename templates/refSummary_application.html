@@ -1,4 +1,12 @@
-    <h1>${page.metadata.get('Application', 'name')}</h1>
-    <ul><li><em>Runtime:</em> ${page.metadata.get('Application', 'runtime')}</li>
+% if page.bundle.iconData:
+<img src="data:${page.bundle.iconType if page.bundle.iconType else ''};base64,${page.bundle.iconData}" style="float: left">
+% endif
+<h1>${page.bundle.name}</h1>
+
+% if page.appdata:
+    ${page.appdata.description}
+% endif
+
+<ul><li><em>Runtime:</em> ${page.metadata.get('Application', 'runtime')}</li>
         <li><em>SDK:</em> ${page.metadata.get('Application', 'sdk')}</li>
     </ul>
