@@ -22,12 +22,15 @@
 import web, web.template
 from web.contrib.template import render_mako
 
-import subprocess
 import ConfigParser
 import urlparse
-import StringIO
+import os.path
+import magic
+from magic import *
+from base64 import b64encode
 
 import ostree
+from utils import *
 
 
 web.config.debug = True
@@ -43,6 +46,8 @@ defaultConfig = {
 config = ConfigParser.ConfigParser(defaults = defaultConfig, allow_no_value = True)
 config.read('ostreebrowser.cfg')
 
+mimeTypeMagic = magic.open(magic.MAGIC_MIME_TYPE)
+mimeTypeMagic.load()
 
 t_globals = {
     'datestr': web.datestr,
@@ -72,7 +77,52 @@ class Breadcrumb:
 
 class AppBundle:
     def __init__(self, ref):
-        pass
+        repo = ostree.Repo(config.get('General', 'repo'))
+        files = repo.ls(ref, '/export/share/applications/%s.desktop' % ref.name)
+        if not files:
+            return
+
+        desktop = stringToConfig(repo.cat(ref, files[0].filePath).decode('utf8'), os.path.basename(files[0].filePath))
+
+        self.ref = ref
+        self.name = desktop.get('Desktop Entry', 'Name')
+        self.genericName = desktop.get('Desktop Entry', 'GenericName')
+        self.categories = filter(None, desktop.get('Desktop Entry', 'categories').split(';'))
+        self.iconName = desktop.get('Desktop Entry', 'Icon')
+        self.iconData = None
+        self.iconType = None
+
+        icons = repo.ls(ref, '/export/share/icons', recursive = True)
+        iconsSizes = {}
+        iconName = None
+        for icon in icons:
+            if icon.type == ostree.FileEntry.File:
+                path = icon.filePath.split('/')
+                sizestr = path[len(path) - 3]
+                if sizestr == 'scalable':
+                    iconName = icon.filePath
+                    break
+                else:
+                    size = int(sizestr.split('x')[0])
+                    iconsSizes[size] = icon.filePath
+
+        if not iconName and iconsSizes:
+            iconName = iconsSizes[sorted(iconsSizes)[-1]]
+
+        if iconName:
+            rawIcon = repo.cat(ref, iconName)
+            self.iconType = mimeTypeMagic.buffer(rawIcon)
+            if self.iconType == 'application/x-gzip':
+                # TODO: Cache those icons
+                rawIcon = ungzipIcon(rawIcon)
+                if rawIcon:
+                    self.iconType = mimeTypeMagic.buffer(rawIcon)
+
+            if rawIcon:
+                self.iconData = b64encode(rawIcon)
+
+    def __repr__(self):
+        return 'AppBundle(%s)' % self.name
 
 class App:
     def GET(self):
@@ -84,7 +134,7 @@ class App:
         page.breadcrumbs.append(Breadcrumb('/', 'repo'))
 
         if 'ref' in query:
-            page.ref = query['ref'][0]
+            page.ref = ostree.Ref(query['ref'][0])
         if 'a' in query:
             page.action = query['a'][0]
         if 'rev' in query:
@@ -113,7 +163,7 @@ class App:
         page.runtimes = []
         page.apps = []
         for ref in self._repo.refs():
-            if ref.startswith('runtime/'):
+            if ref.type == ostree.Ref.Runtime:
                 page.runtimes.append(ref)
             else:
                 page.apps.append(AppBundle(ref))
@@ -123,12 +173,7 @@ class App:
     def _refSummary(self, page):
         page.breadcrumbs.append(Breadcrumb(None, 'summary'))
 
-        metadatastring = StringIO.StringIO()
-        metadatastring.write(self._repo.cat(page.ref, '/metadata'))
-        metadatastring.seek(0)
-        page.metadata = ConfigParser.ConfigParser()
-        page.metadata.readfp(metadatastring, 'metadata')
-
+        page.metadata = stringToConfig(self._repo.cat(page.ref, '/metadata'), 'metadata')
         page.log = self._repo.log(page.ref)
 
         return render.refSummary(page = page)

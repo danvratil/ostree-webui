@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>${page.title}</title>
+    <title>KDE App Bundlers Browser</title>
+    <meta charset="UTF-8"/>
 
     <!-- Bootstrap -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
@@ -12,31 +13,36 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<div class="container-fluid">
+<div id="header-wrapper">
   <div id="header">
     <div id="logo">
-      <a href="/"><img src="/static/logo.png" alt="${page.title}" /></a>
+      <a href="/"><img src="/static/kde-logo.svg" alt="KDE App Bundlers Browser" width=64 height=64 /></a>
     </div>
     % if page.ref:
     <div id="title">
       % for breadcrumb in page.breadcrumbs:
-         % if breadcrumb.url:
-            <a href="${breadcrumb.url}">${breadcrumb.title}</a>&nbsp;/&nbsp;
-         % else:
-            ${breadcrumb.title}&nbsp;/&nbsp;
-         % endif
+          % if breadcrumb.url:
+          <a href="${breadcrumb.url}">${breadcrumb.title}</a>&nbsp;/&nbsp;
+          % else:
+          ${breadcrumb.title}&nbsp;/&nbsp;
+          % endif
       % endfor
     </div>
     <nav>
-        <a href='?ref=${page.ref}&amp;a=summary'>summary</a> |
-        <a href='?ref=${page.ref}&amp;a=log'>log</a> |
-        <a href='?ref=${page.ref}&amp;a=browse'>browse</a>
+      <a href='?ref=${page.ref}&amp;a=summary'>summary</a> |
+      <a href='?ref=${page.ref}&amp;a=log'>log</a> |
+      <a href='?ref=${page.ref}&amp;a=browse'>browse</a>
     </nav>
+    % else:
+    <div id="title">KDE App Bundles Browser</div>
     % endif
+    <div class="clearfix"></div>
+  </div>
 </div>
-
-${self.body()}
-
+<div class="container-wrapper">
+  <div class="container">
+  ${self.body()}
+ </div>
 </div>
 </body>
 </html>

@@ -1,16 +1,37 @@
 <%inherit file="base.html"/>
 
-<table>
-<tr>
-<th>Ref</th>
-<th>Actions</th>
-</tr>
+<%! from base64 import b64encode as base64 %>
 
-% for ref in page.refs:
-    <tr><td><a href="?ref=${ref}">${ref}</a></td>
-        <td><a href="?ref=${ref}&amp;a=log">Log</a>
-            <a href="?ref=${ref}&amp;a=browse">Browse</a>
-        </td>
+<h1>Applications</h1>
+<div id="appsRow">
+% for app in page.apps:
+  <a class="refTile" href="?ref=${app.ref}&amp;a=summary">
+    <div class="refTileContent">
+      <h2>${app.name}</h2>
+      <div class="refTileIcon">
+        <div class="refTileIconVert">
+          % if app.iconData:
+          <img src="data:${app.iconType if app.iconType else ''};base64,${app.iconData}">
+          % else:
+          <img src="/static/generic-app-icon.svg" width=128 height=128>
+          % endif
+        </div>
+      </div>
+      <div class="refTileDesc">
+        <p>${app.genericName}</p>
+      </div>
+    </div>
+  </a>
+% endfor
+  <div class="clearfix"></div>
+</div>
+
+<h1>Runtimes</h1>
+<table>
+% for runtime in page.runtimes:
+    <tr><td><a href="?ref=${runtime}&amp;a=summary">${runtime.name}</td>
+        <td>${runtime.arch}</td>
+        <td>${runtime.branch}</td>
     </tr>
 % endfor
-</table>
+</ul>

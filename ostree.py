@@ -25,6 +25,10 @@ import os.path
 from dateutil import parser
 from stat import *
 
+class ParseException(Exception):
+    def __init__(self, message):
+        pass
+
 class Commit:
     def __init__(self, lines):
         self.rev = None
@@ -32,7 +36,7 @@ class Commit:
         self.msg = None
 
         if len(lines) < 4:
-            return
+            raise ParseException('Unexpected commit format')
 
         self.rev = lines[0][7:]
         self.date = parser.parse(lines[1][7:])
@@ -69,7 +73,7 @@ class FileEntry:
         rcols = line.rsplit(' ', 2)
 
         if len(lcols) < 3:
-            return
+            raise ParseException('Unexpected file entry format')
 
         if lcols[0][0] == '-':
             self.type = FileEntry.File
@@ -98,38 +102,69 @@ class FileEntry:
         self.filePath = rcols[2]
         self.fileName = os.path.basename(self.filePath)
 
+class Ref:
+    Application = 1
+    Runtime = 2
+
+    def __init__(self, ref):
+        parts = ref.split('/')
+        if len(parts) < 4:
+            raise ParseException('Unexpected ref format')
+
+        self._typeStr = parts[0]
+        if self._typeStr == 'app':
+            self.type = Ref.Application
+        elif self._typeStr == 'runtime':
+            self.type = Ref.Runtime
+        else:
+            raise ParseException('Unexpected ref type')
+
+        self.name = parts[1]
+        self.arch = parts[2]
+        self.branch = parts[3]
+
+    def __repr__(self):
+        return '/'.join([self._typeStr, self.name, self.arch, self.branch])
+
+    def __str__(self):
+        return self.__repr__()
+
 
 class Repo:
     def __init__(self, repo):
         self._repo = repo
 
     def refs(self):
-        return self._cmd(['refs']).split('\n')
+        rv = []
+        for ref in self._cmd(['refs']).split('\n'):
+            rv.append(Ref(ref))
+
+        return rv
 
     def revParse(self, rev):
-        return self._cmd(['rev-parse', rev])
+        return Ref(self._cmd(['rev-parse', str(rev)]))
 
     def cat(self, rev, path):
-        return self._cmd(['cat', rev, path], decode = False)
+        return self._cmd(['cat', str(rev), path], decode = False)
 
     def log(self, rev):
-        log = self._cmd(['log', rev])
+        log = self._cmd(['log', str(rev)])
         rv = []
         commit = []
         for line in log.split('\n'):
-            if line.startswith('commit '):
+            if line.startswith('commit ') and commit:
                 rv.append(Commit(commit))
                 commit = []
-            else:
-                commit.append(line)
+
+            commit.append(line)
         return rv
 
     def show(self, rev):
-        commit = self._cmd(['show', rev])
+        commit = self._cmd(['show', str(rev)])
         return Commit(commit.split('\n'))
 
     def diff(self, rev):
-        diff = self._cmd(['diff', rev])
+        diff = self._cmd(['diff', str(rev)])
         rv = []
         for line in diff.split('\n'):
             rv.append(Diff(line))
@@ -139,20 +174,20 @@ class Repo:
         cmd = ['ls']
         if recursive:
             cmd += ['--recursive']
-        cmd += [rev, path]
+        cmd += [str(rev), path]
         ls = self._cmd(cmd)
         rv = []
         for line in ls.split('\n'):
-            rv.append(FileEntry(rv))
+            if line:
+                rv.append(FileEntry(line))
         return rv
 
-
     def _cmd(self, args, decode = True):
-        p = subprocess.Popen(['ostree'] + args + ['--repo=%s' % self._repo],
-                             stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        cmd = ['ostree'] + args + ['--repo=%s' % self._repo]
+        print('Executing:', cmd)
+        p = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         out, _ = p.communicate()
         if decode:
             return out.decode('UTF-8').strip()
         else:
             return out
-
