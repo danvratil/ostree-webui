@@ -1,4 +1,4 @@
-$def with (refs)
+<%inherit file="base.html"/>
 
 <table>
 <tr>
@@ -6,10 +6,11 @@ $def with (refs)
 <th>Actions</th>
 </tr>
 
-$for ref in refs:
-    <tr><td><a href="?ref=$ref">$ref</a></td>
-        <td><a href="?ref=$ref&amp;a=log">Log</a>
-            <a href="?ref=$ref&amp;a=browse">Browse</a>
+% for ref in page.refs:
+    <tr><td><a href="?ref=${ref}">${ref}</a></td>
+        <td><a href="?ref=${ref}&amp;a=log">Log</a>
+            <a href="?ref=${ref}&amp;a=browse">Browse</a>
         </td>
     </tr>
+% endfor
 </table>

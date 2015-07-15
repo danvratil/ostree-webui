@@ -1,27 +1,32 @@
-$def with (ref, rev, path, listing)
-
+<%inherit file="base.html"/>
 
 <h1>Browse</h1>
 
 <table>
-$for l in listing:
-    $if not l.name:
-        $continue
+% for l in page.listing:
+    % if not l.name:
+        <% continue %>
+    % endif
 
-    $if l.path == path:
-        $continue
-    <tr><td><pre>$:l.filemode()</pre></td>
-        <td>$l.size</td>
+    % if l.path == path:
+        <% continue %>
+    % endif
+
+    <tr><td>${l.filemode()}</td>
+        <td>${l.size}</td>
         <td>
-            $if l.isDir():
-                <a href="?ref=$ref&amp;a=browse&amp;rev=$rev&amp;path=$l.path">[+]</a>
+            % if l.isDir():
+                <a href="?ref=${page.ref}&amp;a=browse&amp;rev=${page.rev}&amp;path=${l.path}">[+]</a>
+            % endif
         </td>
         <td>
-            $if l.isDir():
-                <a href="?ref=$ref&amp;a=browse&amp;rev=$rev&amp;path=$l.path">
-            $else:
-                <a href="?ref=$ref&amp;a=blob&amp;rev=$rev&amp;path=$l.path">
-            $l.name</a>
+            % if l.isDir():
+                <a href="?ref=${page.ref}&amp;a=browse&amp;rev=${page.rev}&amp;path=${l.path}">
+            % else:
+                <a href="?ref=${page.ref}&amp;a=blob&amp;rev=${page.rev}&amp;path=${l.path}">
+            %endif
+            ${l.name}</a>
         </td>
     </tr>
+% endfor
 </table>

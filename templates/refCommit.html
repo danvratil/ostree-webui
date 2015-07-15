@@ -1,28 +1,33 @@
-$def with (ref, rev, parentRev, commit, diff)
+<%inherit file="base.html"/>
 
-<h1>Commit $commit.rev</h1>
-<strong>Date:</strong> $:datestr(commit.date)<br/>
-$if parentRev:
-    <strong>Parent:</strong> <a href="?ref=$ref&amp;a=commit&amp;rev=$parentRev">$parentRev</a><br/>
+<%! from time import strftime as time %>
+
+<h1>Commit ${page.commit.rev}</h1>
+<strong>Date:</strong> ${page.commit.date | time}<br/>
+% if page.parentRev:
+    <strong>Parent:</strong> <a href="?ref=${page.ref}&amp;a=commit&amp;rev=${page.parentRev}">${page.parentRev}</a><br/>
+% endif
 <br/>
 <pre>
-$commit.message
-Name: $commit.name
-Arch: $commit.arch
-Branch: $commit.branch
+${page.commit.message}
+Name: ${page.commit.name}
+Arch: ${page.commit.arch}
+Branch: ${page.commit.branch}
 </pre>
 
 <br/>
 
 <h2>Diff:</h2>
 <pre>
-$for d in diff:
-    <span style="color: 
-    $if d.startswith('A'):
+% for d in page.diff:
+    <span style="color:
+    % if d.startswith('A'):
         green
-    $elif d.startswith('M'):
+    % elif d.startswith('M'):
         blue
-    $else:
+    % else:
         red
-    ">$d</span>
+    % endif
+    ">${d}</span>
+% endfor
 </pre>

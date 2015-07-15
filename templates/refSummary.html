@@ -1,14 +1,16 @@
-$def with (ref, rev, metadata, log)
+<%inherit file="base.html"/>
 
-$if metadata.has_section('Application'):
-    <h1>$metadata.get('Application', 'name')</h1>
-    <ul><li><em>Runtime:</em> $metadata.get('Application', 'runtime')</li>
-        <li><em>SDK:</em> $metadata.get('Application', 'sdk')</li>
+<%! from time import strftime as time %>
+
+% if page.metadata.has_section('Application'):
+    <h1>${page.metadata.get('Application', 'name')}</h1>
+    <ul><li><em>Runtime:</em> ${page.metadata.get('Application', 'runtime')}</li>
+        <li><em>SDK:</em> ${page.metadata.get('Application', 'sdk')}</li>
     </ul>
-$elif metadata.has_section('Runtime'):
-    <h1>$metadata.get('Runtime', 'runtime')</h1>
-    <em>SDK:</em> $metadata.get('Runtime', 'sdk')
-
+% elif page.metadata.has_section('Runtime'):
+    <h1>${page.metadata.get('Runtime', 'runtime')}</h1>
+    <em>SDK:</em> ${page.metadata.get('Runtime', 'sdk')}
+% endif
 
 <h2>Log</h2>
 <table>
@@ -16,13 +18,16 @@ $elif metadata.has_section('Runtime'):
     <th>Message</th>
     <th>Date</th>
 </tr>
-$for entry in log:
+
+% for entry in page.log:
     <tr>
-        <td><a href="?ref=$ref&amp;a=commit&amp;rev=$entry.rev">$entry.rev</a></td>
+        <td><a href="?ref=${page.ref}&amp;a=commit&amp;rev=${entry.rev}">${entry.rev}</a></td>
         <td>
-        $if entry.message:
-            $entry.message.split('\n', 1)[0]
+        % if entry.message:
+            ${entry.message.split('\n', 1)[0]}
+        %endif
         </td>
-        <td>$:datestr(entry.date)</td>
+        <td>${entry.date | time}</td>
     </tr>
+% endfor
 </table>

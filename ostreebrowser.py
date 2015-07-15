@@ -20,6 +20,8 @@
 #
 
 import web, web.template
+from web.contrib.template import render_mako
+
 import subprocess
 import ConfigParser
 import urlparse
@@ -27,94 +29,123 @@ import StringIO
 
 from utils import *
 
+
 web.config.debug = True
 
-app = web.application(fvars = globals())
+app = web.application(fvars = globals(), autoreload = True)
 app.add_mapping('/', 'App')
 
-config = ConfigParser.ConfigParser()
+defaultConfig = {
+    'title': 'OSTree Browser',
+    'logo': 'xyz',
+}
+
+config = ConfigParser.ConfigParser(defaults = defaultConfig, allow_no_value = True)
 config.read('ostreebrowser.cfg')
 
 
 t_globals = {
     'datestr': web.datestr,
 }
-render = web.template.render('templates', base='base', globals = t_globals)
 
+render = render_mako(
+        directories = ['templates'],
+        input_encoding = 'utf-8',
+        output_encoding = 'utf-8')
+
+class Page:
+    def __init__(self, dummy = None):
+        self.title = config.get('General', 'title')
+        self.logo = config.get('General', 'logo')
+
+        self.ref = None
+        self.action = None
+        self.rev = None
+        self.path = None
 
 class App:
     def GET(self):
         query = urlparse.parse_qs(web.ctx.query[1:])
-        if not 'ref' in query:
-            return self._listRefs();
-        else:
-            if not 'a' in query:
-                return self._refSummary(query['ref'][0])
-            else:
-                if query['a'][0] == 'log':
-                    return self._refLog(query['ref'][0])
-                elif query['a'][0] == 'browse':
-                    return self._refBrowse(query['ref'][0],
-                                           query['path'][0] if 'path' in query else None,
-                                           query['rev'][0] if 'rev' in query else None)
-                elif query['a'][0] == 'commit' and 'rev' in query:
-                    return self._refCommit(query['ref'][0], query['rev'][0])
 
-        return self._listRefs()
+        page = Page()
+
+        if 'ref' in query:
+            page.ref = query['ref'][0]
+        if 'a' in query:
+            page.action = query['a'][0]
+        if 'rev' in query:
+            page.rev = query['rev'][0]
+        if 'path' in query:
+            page.path = query['path'][0]
+
+        if not page.ref:
+            return self._listRefs(page);
+        else:
+            if not page.action:
+                return self._refSummary(page)
+            else:
+                if page.action == 'log':
+                    return self._refLog(page)
+                elif page.action == 'browse':
+                    return self._refBrowse(page)
+                elif page.action == 'commit' and page.rev:
+                    return self._refCommit(page)
+
+        return self._listRefs(page)
 
     def _ostree(self, args):
         p = subprocess.Popen(['ostree'] + args + ['--repo=%s' % config.get('General', 'repo')],
                              stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         print("Executed: %s" % (['ostree'] + args + ['--repo=%s' % config.get('General', 'repo')]))
         out, err = p.communicate()
-        return out.decode('UTF-8'), err.decode('UTF-8')
+        return out.decode('UTF-8').strip(), err.decode('UTF-8').strip()
 
-    def _listRefs(self):
+    def _listRefs(self, page):
         refs, err = self._ostree(['refs'])
-        refs = refs.split('\n')
-        refs.sort()
+        page.refs = refs.split('\n')
+        page.refs.sort()
 
-        return render.refs(refs)
+        return render.refs(page = page)
 
-    def _refSummary(self, ref):
-        rev, err = self._ostree(['rev-parse', ref])
-        rev = rev.strip()
+    def _refSummary(self, page):
+        ''' Resolve HEAD rev for current ref'''
+        page.rev, err = self._ostree(['rev-parse', page.ref])
 
-        rawmetadata, err = self._ostree(['cat', rev, 'metadata'])
-        rawlog, err = self._ostree(['log', ref])
+        rawmetadata, err = self._ostree(['cat', page.rev, 'metadata'])
+        rawlog, err = self._ostree(['log', page.ref])
+        page.log = OSTreeLog(rawlog.split('\n'))
 
         metadatastring = StringIO.StringIO()
         metadatastring.write(rawmetadata)
         metadatastring.seek(0)
 
-        metadata = ConfigParser.ConfigParser()
-        metadata.readfp(metadatastring, 'metadata')
+        page.metadata = ConfigParser.ConfigParser()
+        page.metadata.readfp(metadatastring, 'metadata')
 
-        return render.refSummary(ref, rev, metadata, OSTreeLog(rawlog.split('\n')))
+        return render.refSummary(page = page)
 
+    def _refCommit(self, page):
+        commit, err = self._ostree(['show', page.rev])
+        page.commit = OSTreeLog(commit.split('\n')).next()
+        page.parentRev, err = self._ostree(['rev-parse', page.rev + '^'])
 
-    def _refCommit(self, ref, rev):
-        commit, err = self._ostree(['show', rev])
-        parentRev, err = self._ostree(['rev-parse', rev + '^'])
-        parentRev = parentRev.strip()
+        page.diff, err = self._ostree(['diff', page.rev])
+        page.diff = page.diff.split('\n')
 
-        diff, err = self._ostree(['diff', rev])
+        return render.refCommit(page = page)
 
-        return render.refCommit(ref, rev, parentRev, OSTreeLog(commit.split('\n')).next(), diff.split('\n'))
-
-    def _refBrowse(self, ref, path, rev = None):
+    def _refBrowse(self, page):
         ''' If no rev is provided, use HEAD of current ref '''
-        if not rev:
-            rev, err = self._ostree(['rev-parse', ref])
-            rev = rev.strip()
+        if not page.rev:
+            page.rev, err = self._ostree(['rev-parse', page.ref])
 
-        if not path:
-            path = '/'
+        if not page.path:
+            page.path = '/'
 
-        listing, err = self._ostree(['ls', rev, path])
-        listing = listing.split('\n')
+        listing, err = self._ostree(['ls', page.rev, page.path])
+        page.listing = OSTreeDirList(listing.split('\n'))
 
-        return render.refBrowse(ref, rev, path, OSTreeDirList(listing))
+        return render.refBrowse(page = page)
 
 if __name__ == "__main__":
     app.run()
