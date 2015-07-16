@@ -1,0 +1,22 @@
+<%
+nav = [ [ 'browse', 'Browse' ],
+        [ 'log', 'History' ],
+        [ 'summary', 'Summary' ] ]
+%>
+
+
+<div id="refAppHeader">
+  <nav>
+    % if page.bundle.iconData:
+    <img src="data:${page.bundle.iconType if page.bundle.iconType else ''};base64,${page.bundle.iconData}" class="refSummaryLogo">
+    % endif
+    <h1>${page.bundle.name} - <small>${page.bundle.genericName}</small></h1>
+
+    <ul class="nav nav-tabs">
+    % for action in nav:
+      <li role="presentation" ${ 'class="active"' if page.action == action[0] else '' }><a href="?ref=${page.ref}&amp;a=${action[0]}">${action[1]}</a></li>
+    % endfor
+    </ul>
+  </nav>
+  <div class="clearfix"></div>
+</div>

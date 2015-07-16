@@ -26,7 +26,7 @@ import ConfigParser
 import urlparse
 import os.path
 import magic
-import xml.etree.ElementTree as ET
+import lxml.etree as ET
 from magic import *
 from base64 import b64encode
 
@@ -184,13 +184,15 @@ class App:
         page.metadata = stringToConfig(self._repo.cat(page.ref, '/metadata'), 'metadata')
         page.appdata = self._parseAppdata(page.ref)
         page.bundle = AppBundle(page.ref)
-        page.log = self._repo.log(page.ref)
 
         return render.refSummary(page = page)
 
     def _refLog(self, page):
         page.breadcrumbs.append(Breadcrumb(None, 'log'))
 
+        page.metadata = stringToConfig(self._repo.cat(page.ref, '/metadata'), 'metadata')
+        page.appdata = self._parseAppdata(page.ref)
+        page.bundle = AppBundle(page.ref)
         page.log = self._repo.log(page.ref)
 
         return render.refLog(page = page)
@@ -235,24 +237,40 @@ class App:
         root = ET.fromstring(appdataXml)
 
         appdata = Appdata()
-        for child in root:
-            if child.tag == 'name' and not child.attrib:
-                appdata.name = child.text
-            elif child.tag == 'description':
-                desc = ''
-                for par in child:
-                    if par.tag == 'p' and not par.attrib:
-                        desc += '<p>' + par.text + '</p>'
-                appdata.description = desc
-            elif child.tag == 'url' and child.attrib['type'] == 'homepage':
-                appdata.homepage = child.text
-            elif child.tag == 'url' and child.attrib['type'] == 'help':
-                appdata.help = child.text
-            elif child.tag == 'screenshots':
-                appdata.images = []
-                scrchots = child.findall('image')
-                for scrshot in scrchots:
-                    appdata.images.append(scrshot.text)
+
+        find = ET.XPath('./name[lang("en")]', namespaces = { 'xml' : 'http://www.w3.org/XML/1998/namespace' })
+        appdata.name = find(root)[0].text
+
+        find = ET.XPath('./description')
+        results = find(root)
+        if results:
+            desc = results[0]
+            for d in desc.iter():
+                if '{http://www.w3.org/XML/1998/namespace}lang' in d.keys():
+                    d.getparent().remove(d)
+
+            find = ET.XPath('.//*[1]')
+            results = find(desc)
+            if results and results[0].tag == 'p':
+                results[0].set('class', 'lead')
+
+            find = ET.XPath('./*')
+            results = find(desc)
+            appdata.description = ''
+            for result in results:
+                appdata.description += ET.tostring(result)
+
+        find = ET.XPath('./url[@type="homepage"]')
+        results = find(root)
+        if results:
+            appdata.homepage = results[0].text
+        find = ET.XPath('./url[@type="help"]')
+        results = find(root)
+        if results:
+            appdata.help = results[0].text
+
+        find = ET.XPath("./screenshots/screenshot/image/text()")
+        appdata.images = find(root)
 
         return appdata
 

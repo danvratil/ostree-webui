@@ -33,7 +33,7 @@ class Commit:
     def __init__(self, lines):
         self.rev = None
         self.date = None
-        self.msg = None
+        self.message = None
 
         if len(lines) < 4:
             raise ParseException('Unexpected commit format')

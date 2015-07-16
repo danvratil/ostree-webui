@@ -1,12 +1,32 @@
-% if page.bundle.iconData:
-<img src="data:${page.bundle.iconType if page.bundle.iconType else ''};base64,${page.bundle.iconData}" style="float: left">
-% endif
-<h1>${page.bundle.name}</h1>
+<%include file="partials/refApplication_header.html" />
 
+<article>
 % if page.appdata:
+    <div class="refSummaryDesc">
     ${page.appdata.description}
-% endif
+    </div>
 
-<ul><li><em>Runtime:</em> ${page.metadata.get('Application', 'runtime')}</li>
-        <li><em>SDK:</em> ${page.metadata.get('Application', 'sdk')}</li>
-    </ul>
+    <div class="refSummaryScreenshots">
+    % for scrshot in page.appdata.images:
+        <img src="${scrshot}" class="img-thumbnail center-block gallery-thumbnail" width="40%" />
+    % endfor
+    <div class="clearfix"></div>
+    </div>
+% endif
+</article>
+
+<article>
+<h2>Install</h2>
+<pre>xdg-app install --user <abbr data-toggle="tooltip" data-original-title="<code>xdg-app add-remote --user kde https://kde.dvratil.cz</code>" data-html="true">kde</abbr> ${page.ref}</pre>
+</article>
+
+<article>
+<h2>Requirements</h2>
+<ul class="refSummaryReq">
+<li><strong>Runtime:</strong> <a href="?ref=${page.metadata.get('Application', 'runtime')}">${page.metadata.get('Application', 'runtime')}</a></li>
+<li><strong>SDK:</strong> <a href="?ref=${page.metadata.get('Application', 'runtime')}">${page.metadata.get('Application', 'sdk')}</a></li>
+</ul>
+</article>
+
+
+<%include file="partials/gallery_preview.html" />

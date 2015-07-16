@@ -8,23 +8,3 @@
     <h1>${page.metadata.get('Runtime', 'runtime')}</h1>
     <em>SDK:</em> ${page.metadata.get('Runtime', 'sdk')}
 % endif
-
-<h2>Log</h2>
-<table>
-<tr><th>Revision</th>
-    <th>Message</th>
-    <th>Date</th>
-</tr>
-
-% for entry in page.log:
-    <tr>
-        <td><a href="?ref=${page.ref}&amp;a=commit&amp;rev=${entry.rev}">${entry.rev}</a></td>
-        <td>
-        % if entry.message:
-            ${entry.message.split('\n', 1)[0]}
-        %endif
-        </td>
-        <td>${entry.date | time}</td>
-    </tr>
-% endfor
-</table>

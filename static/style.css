@@ -24,16 +24,44 @@ body {
     margin: auto;
 }
 
-nav {
-    max-width: 1040px;
-    width: auto;
+#refAppHeader nav {
+    width: 100%;
     margin: auto;
     font-size: 25px;
-    padding-top: 10px;
+    position: relative;
+    height: 128px;
 }
 
-nav a {
+
+#refAppHeader nav a {
     font-size: 25px;
+}
+
+#refAppHeader .nav {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+
+#refAppHeader .nav li {
+    float: right;
+}
+
+#refAppHeader img {
+    float: left;
+}
+
+#refAppHeader h1 {
+    float: left;
+    line-height: 128px;
+    padding: 0;
+    margin: 0;
+    padding-left: 15px;
+}
+
+article {
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 
@@ -102,4 +130,20 @@ nav a {
     position: absolute;
     bottom: 10px;
     width: 100%;
+}
+
+.refSummaryScreenshots {
+    margin: 10px;
+}
+
+.refSummaryScreenshots img {
+    float: left;
+    margin-left: 5px;
+    margin-right: 5px;
+    cursor: pointer
+}
+
+.refSummaryReq {
+    list-style: none;
+    padding: 0;
 }

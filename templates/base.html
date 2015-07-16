@@ -4,13 +4,19 @@
     <title>KDE App Bundlers Browser</title>
     <meta charset="UTF-8"/>
 
-    <!-- Bootstrap -->
+    ## JQuery
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+
+    ## Bootstrap
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 
-    <!-- Our style -->
+    ## Our style
     <link rel="stylesheet" href="/static/style.css">
+
+    ## Our script
+    <script src="/static/js/main.js"></script>
 </head>
 <body>
 <div id="header-wrapper">
@@ -22,21 +28,7 @@
     <div class="clearfix"></div>
   </div>
 </div>
-%if page.ref:
 
-<%
-nav = [ [ 'summary', 'Summary' ],
-        [ 'log', 'Log' ],
-        [ 'browse', 'Browse' ] ]
-%>
-<nav>
-  <ul class="nav nav-tabs">
-  % for action in nav:
-    <li role="presentation" ${ 'class="active"' if page.action == action[0] else '' }><a href="?ref=${page.ref}&amp;a=${action[0]}">${action[1]}</a></li>
-  % endfor
-  </ul>
-</nav>
-%endif
 <div class="container-wrapper">
   <div class="container">
   ${self.body()}
