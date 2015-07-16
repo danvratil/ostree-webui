@@ -3,6 +3,10 @@ body {
     padding: 0
 }
 
+.table tbody>tr>td{
+    vertical-align: middle;
+}
+
 .container-wrapper {
     margin: 5px;
 }

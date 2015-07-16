@@ -2,22 +2,26 @@
 
 <%! from time import strftime as time %>
 
-<h1>Log</h1>
-<table>
-<tr><th>Revision</th>
-    <th>Message</th>
-    <th>Date</th>
+<%include file="partials/refApplication_header.html" />
+
+<table class="table table-hover">
+<tr>
+  <th>Revision</th>
+  <th width="100%">Message</th>
+  <th>Date</th>
 </tr>
 
 % for entry in page.log:
-    <tr>
-        <td><a href="?ref=${page.ref}&amp;a=commit&amp;rev=${entry.rev}">${entry.rev}</a></td>
-        <td>
-        % if entry.message:
-            ${entry.message.split('\n', 1)[0]}
-        %endif
-        </td>
-        <td>${entry.date | time}</td>
-    </tr>
+<tr>
+  <td><a href="?ref=${page.ref}&amp;a=commit&amp;rev=${entry.rev}">${entry.rev}</a></td>
+  <td>
+  % if entry.msg:
+    ${entry.msg.split('\n', 1)[0]}
+  % else:
+    Empty commit message
+  % endif
+  </td>
+  <td>${entry.date | time}</td>
+</tr>
 % endfor
 </table>

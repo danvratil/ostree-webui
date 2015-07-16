@@ -41,7 +41,7 @@ class Commit:
         self.rev = lines[0][7:]
         self.date = parser.parse(lines[1][7:])
         self.date = self.date.replace(tzinfo = None)
-        self.msg = '\n'.join(lines[2:])
+        self.msg = '\n'.join(lines[3:])
 
 class Diff:
     Added = 1
