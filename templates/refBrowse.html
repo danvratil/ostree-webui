@@ -1,32 +1,44 @@
 <%inherit file="base.html"/>
 
-<h1>Browse</h1>
+<%! import ostree %>
 
-<table>
+<%include file="partials/refApplication_header.html" />
+
+<h2 class="browserNavigation">
+/ <a href="?ref=${page.ref}&amp;a=browse&amp;rev=${page.rev}&amp;path=/">root</a> /
+<% fullpath = '' %>
+% for path in page.path.split('/'):
+    % if not path:
+        <% continue %>
+    % endif
+
+    <% fullpath += '/' + path %>
+    <a href="?ref=${page.ref}&amp;a=browse&amp;rev=${page.rev}&amp;path=${fullpath}">${path}</a> /
+% endfor
+</h2>
+
+<table class="table">
+<tr>
+  <th>Mode</th>
+  <th class="browserTableSize">Size</th>
+  <th width="80%">Name</th>
+</tr>
 % for l in page.listing:
-    % if not l.name:
-        <% continue %>
-    % endif
+  % if l.filePath == page.path:
+    <% continue %>
+  % endif
 
-    % if l.path == path:
-        <% continue %>
-    % endif
-
-    <tr><td>${l.filemode()}</td>
-        <td>${l.size}</td>
-        <td>
-            % if l.isDir():
-                <a href="?ref=${page.ref}&amp;a=browse&amp;rev=${page.rev}&amp;path=${l.path}">[+]</a>
-            % endif
-        </td>
-        <td>
-            % if l.isDir():
-                <a href="?ref=${page.ref}&amp;a=browse&amp;rev=${page.rev}&amp;path=${l.path}">
-            % else:
-                <a href="?ref=${page.ref}&amp;a=blob&amp;rev=${page.rev}&amp;path=${l.path}">
-            %endif
-            ${l.name}</a>
-        </td>
-    </tr>
+  <tr>
+    <td><code>${l.mode}</code></td>
+    <td class="browserTableSize">${l.size} bytes</td>
+    <td>
+      % if l.type == ostree.FileEntry.Dir:
+      <a href="?ref=${page.ref}&amp;a=browse&amp;rev=${page.rev}&amp;path=${l.filePath}" class="glyphicon glyphicon-folder-close browser-icon">
+      % else:
+        <a href="?ref=${page.ref}&amp;a=blob&amp;rev=${page.rev}&amp;path=${l.filePath}" class="glyphicon glyphicon-file">
+      %endif
+      ${l.fileName}</a>
+    </td>
+  </tr>
 % endfor
 </table>

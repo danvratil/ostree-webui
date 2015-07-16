@@ -12,4 +12,15 @@
     })
 
     $('[data-toggle="tooltip"]').tooltip()
+
+    $('.browser-icon').hover(
+        function () {
+            $(this).removeClass('glyphicon-folder-close')
+            $(this).addClass('glyphicon-folder-open');
+        },
+        function () {
+            $(this).removeClass('glyphicon-folder-open')
+            $(this).addClass('glyphicon-folder-close');
+        }
+    );
 })

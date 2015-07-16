@@ -151,3 +151,8 @@ article {
     list-style: none;
     padding: 0;
 }
+
+.browserTableSize {
+    text-align: right;
+    white-space: nowrap;
+}

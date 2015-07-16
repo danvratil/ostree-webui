@@ -216,6 +216,9 @@ class App:
         if not page.path:
             page.path = '/'
 
+        page.metadata = stringToConfig(self._repo.cat(page.ref, '/metadata'), 'metadata')
+        page.appdata = self._parseAppdata(page.ref)
+        page.bundle = AppBundle(page.ref)
         page.listing = self._repo.ls(page.rev, page.path)
 
         return render.refBrowse(page = page)
