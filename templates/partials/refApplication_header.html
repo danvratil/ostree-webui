@@ -1,7 +1,7 @@
 <%
-nav = [ [ 'browse', 'Browse' ],
-        [ 'log', 'History' ],
-        [ 'summary', 'Summary' ] ]
+nav = [ [ [ 'browse', 'blob' ], 'Browse' ],
+        [ [ 'log' ], 'History' ],
+        [ [ 'summary' ], 'Summary' ] ]
 %>
 
 
@@ -14,7 +14,7 @@ nav = [ [ 'browse', 'Browse' ],
 
     <ul class="nav nav-tabs">
     % for action in nav:
-      <li role="presentation" ${ 'class="active"' if page.action == action[0] else '' }><a href="?ref=${page.ref}&amp;a=${action[0]}">${action[1]}</a></li>
+      <li role="presentation" ${ 'class="active"' if page.action in action[0] else '' }><a href="?ref=${page.ref}&amp;a=${action[0][0]}">${action[1]}</a></li>
     % endfor
     </ul>
   </nav>

@@ -1,0 +1,18 @@
+<%inherit file="base.html"/>
+
+<%include file="partials/refApplication_header.html" />
+
+<%include file="partials/refBrowser_navigation.html" />
+<p><strong>Size:</strong> ${page.size} bytes | <strong>MimeType:</strong> ${page.mimetype}</p>
+
+% if page.isText:
+<pre class="with-line-numbers"><code>\
+${page.fileContents}\
+</code></pre>
+% elif page.isImage:
+    <pre> \
+    <img src="data:${page.mimetype if page.mimetype else ''};base64,${page.fileContents}" class="center-block blobImage">
+    </pre>
+% else:
+    <pre>The file contains binary data and cannot be displayed</pre>
+%endif

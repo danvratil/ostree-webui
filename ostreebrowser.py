@@ -220,8 +220,10 @@ class App:
                     return self._refBrowse(page)
                 elif page.action == 'commit' and page.rev:
                     return self._refCommit(page)
+                elif page.action == 'blob' and page.rev and page.path:
+                    return self._refBlob(page)
 
-        return self._listRefs(page)
+        raise web.seeother('/')
 
     def _listRefs(self, page):
         page.runtimes = []
@@ -266,7 +268,29 @@ class App:
 
         return render.refBrowse(page = page)
 
+    def _refBlob(self, page):
+        page.metadata = AppMetadata(page.ref, withAppdata = False)
+        files = self._repo.ls(page.rev, page.path)
+        if not files:
+            raise web.seeother('?ref=' + page.ref)
 
+        filedesc = files[0]
+        if filedesc.type == ostree.FileEntry.Dir:
+            raise web.seeother('?ref=' + page.ref + '&a=browse&rev=' + page.rev + '&path=' + page.path)
+
+        rawdata = self._repo.cat(page.rev, page.path)
+        page.mimetype = mimeTypeMagic.buffer(rawdata)
+        page.isText = page.mimetype.startswith('text/')
+        page.isImage = page.mimetype.startswith('image/')
+        page.size = len(rawdata)
+        if page.isText:
+            page.fileContents = rawdata
+        elif page.isImage:
+            page.fileContents = b64encode(rawdata)
+        else:
+            page.fileContents = None
+
+        return render.refBlob(page = page)
 
 if __name__ == "__main__":
     app.run()

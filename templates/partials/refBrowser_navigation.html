@@ -1,0 +1,12 @@
+<h2 class="browserNavigation">
+/ <a href="?ref=${page.ref}&amp;a=browse&amp;rev=${page.rev}&amp;path=/">root</a>
+<% fullpath = '' %>
+% for path in page.path.split('/'):
+    % if not path:
+        <% continue %>
+    % endif
+
+    <% fullpath += '/' + path %>
+    / <a href="?ref=${page.ref}&amp;a=browse&amp;rev=${page.rev}&amp;path=${fullpath}">${path}</a>
+% endfor
+</h2>

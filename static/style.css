@@ -156,3 +156,55 @@ article {
     text-align: right;
     white-space: nowrap;
 }
+
+pre.with-line-numbers {
+    padding: 0;
+    white-space: nowrap;
+}
+
+pre.with-line-numbers code {
+    min-width: 100%;
+}
+
+pre.with-line-numbers code,
+pre.with-line-numbers .line-number {
+    display: inline-block;
+}
+
+pre.with-line-numbers code .code-line {
+    display: inline-block;
+    min-width: 100%;
+    padding: 0 5px 0 5px;
+    white-space: nowrap;
+}
+
+pre.with-line-numbers .line-number {
+    float: left;
+    margin: 0 0 0 -1em;
+    padding: 5px 0 5px 5px;
+    border-right: 1px solid;
+    text-align: right;
+}
+
+pre.with-line-numbers code {
+    padding: 5px 0 5px 0;
+}
+
+pre.with-line-numbers .line-number span {
+    display: block;
+    padding: 0 .5em 0 1em;
+}
+
+pre.with-line-numbers .cl {
+    display: block;
+    clear: both;
+}
+
+.blobImage {
+    background: transparent;
+    border: 1px solid transparent;
+}
+
+.blobImage:hover {
+    background: #FFF;
+    border: 1px solid #CCC;
