@@ -136,6 +136,11 @@ article {
     width: 100%;
 }
 
+.refSummaryLogo {
+    width: 128px;
+    padding: 10px;
+}
+
 .refSummaryScreenshots {
     margin: 10px;
 }

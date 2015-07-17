@@ -284,7 +284,7 @@ class App:
         page.isImage = page.mimetype.startswith('image/')
         page.size = len(rawdata)
         if page.isText:
-            page.fileContents = rawdata
+            page.fileContents = rawdata.decode('utf8')
         elif page.isImage:
             page.fileContents = b64encode(rawdata)
         else:
