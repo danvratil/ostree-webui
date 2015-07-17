@@ -212,16 +212,15 @@ class App:
             return self._listRefs(page);
         else:
             if not page.action or page.action == 'summary':
-                return self._refSummary(page)
-            else:
-                if page.action == 'log':
-                    return self._refLog(page)
-                elif page.action == 'browse':
-                    return self._refBrowse(page)
-                elif page.action == 'commit' and page.rev:
-                    return self._refCommit(page)
-                elif page.action == 'blob' and page.rev and page.path:
-                    return self._refBlob(page)
+                return self._summary(page)
+            elif page.action == 'log':
+                return self._log(page)
+            elif page.action == 'browse':
+                return self._browse(page)
+            elif page.action == 'commit' and page.rev:
+                return self._commit(page)
+            elif page.action == 'blob' and page.rev and page.path:
+                return self._blob(page)
 
         raise web.seeother('/')
 
@@ -236,18 +235,18 @@ class App:
 
         return render.refs(page = page)
 
-    def _refSummary(self, page):
+    def _summary(self, page):
         page.metadata = AppMetadata(page.ref)
 
         return render.summary(page = page)
 
-    def _refLog(self, page):
+    def _log(self, page):
         page.metadata = AppMetadata(page.ref, withAppdata = False)
         page.log = self._repo.log(page.ref)
 
         return render.log(page = page)
 
-    def _refCommit(self, page):
+    def _commit(self, page):
         page.metadata = AppMetadata(page.ref, withAppdata = False)
         page.commit = self._repo.show(page.rev)
         page.parentRev = self._repo.revParse(page.rev + '^')
@@ -255,7 +254,7 @@ class App:
 
         return render.commit(page = page)
 
-    def _refBrowse(self, page):
+    def _browse(self, page):
         ''' If no rev is provided, use HEAD of current ref '''
         if not page.rev:
             page.rev = page.ref
@@ -268,7 +267,7 @@ class App:
 
         return render.browser(page = page)
 
-    def _refBlob(self, page):
+    def _blob(self, page):
         page.metadata = AppMetadata(page.ref, withAppdata = False)
         files = self._repo.ls(page.rev, page.path)
         if not files:
