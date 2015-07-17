@@ -15,8 +15,8 @@
 <tr>
   <td><a href="?ref=${page.ref}&amp;a=commit&amp;rev=${entry.rev}">${entry.rev}</a></td>
   <td>
-  % if entry.msg:
-    ${entry.msg.split('\n', 1)[0]}
+  % if entry.message:
+    ${entry.message.split('\n', 1)[0]}
   % else:
     Empty commit message
   % endif

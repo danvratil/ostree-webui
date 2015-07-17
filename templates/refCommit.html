@@ -1,8 +1,13 @@
 <%inherit file="base.html"/>
 
-<%! from time import strftime as time %>
+<%
+from time import strftime as time
+import ostree 
+%>
 
-<h1>Commit ${page.commit.rev}</h1>
+<%include file="partials/refApplication_header.html" />
+
+<h2>Commit ${page.commit.rev}</h2>
 <strong>Date:</strong> ${page.commit.date | time}<br/>
 % if page.parentRev:
     <strong>Parent:</strong> <a href="?ref=${page.ref}&amp;a=commit&amp;rev=${page.parentRev}">${page.parentRev}</a><br/>
@@ -10,24 +15,20 @@
 <br/>
 <pre>
 ${page.commit.message}
-Name: ${page.commit.name}
-Arch: ${page.commit.arch}
-Branch: ${page.commit.branch}
 </pre>
 
 <br/>
 
 <h2>Diff:</h2>
 <pre>
-% for d in page.diff:
-    <span style="color:
-    % if d.startswith('A'):
-        green
-    % elif d.startswith('M'):
-        blue
+%for d in page.diff:
+    % if d.mode == ostree.Diff.Added:
+<span style="color: green">A</span> \
+    % elif d.mode == ostree.Diff.Modified:
+<span style="color: blue">M</span> \
     % else:
-        red
+<span style="color: red">D</span> \
     % endif
-    ">${d}</span>
+&#09;${d.filePath}
 % endfor
 </pre>
