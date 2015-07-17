@@ -63,7 +63,6 @@ class Page:
     def __init__(self, dummy = None):
         self.title = config.get('General', 'title')
         self.logo = config.get('General', 'logo')
-        self.breadcrumbs = []
 
         self.ref = None
         self.action = None
@@ -192,11 +191,6 @@ class AppMetadata:
         self.images = find(root)
 
 
-class Breadcrumb:
-    def __init__(self, url, title):
-        self.url = url
-        self.title = title
-
 class App:
     def GET(self):
         query = urlparse.parse_qs(web.ctx.query[1:])
@@ -204,7 +198,6 @@ class App:
         self._repo = ostree.Repo(config.get('General', 'repo'))
 
         page = Page()
-        page.breadcrumbs.append(Breadcrumb('/', 'repo'))
 
         if 'ref' in query:
             page.ref = ostree.Ref(query['ref'][0])
@@ -218,8 +211,6 @@ class App:
         if not page.ref:
             return self._listRefs(page);
         else:
-            page.breadcrumbs.append(Breadcrumb('?ref=%s' % page.ref, page.ref))
-
             if not page.action or page.action == 'summary':
                 return self._refSummary(page)
             else:
@@ -244,20 +235,17 @@ class App:
         return render.refs(page = page)
 
     def _refSummary(self, page):
-        page.breadcrumbs.append(Breadcrumb(None, 'summary'))
         page.metadata = AppMetadata(page.ref)
 
         return render.refSummary(page = page)
 
     def _refLog(self, page):
-        page.breadcrumbs.append(Breadcrumb(None, 'log'))
         page.metadata = AppMetadata(page.ref, withAppdata = False)
         page.log = self._repo.log(page.ref)
 
         return render.refLog(page = page)
 
     def _refCommit(self, page):
-        page.breadcrumbs.append(Breadcrumb(None, 'commit'))
         page.metadata = AppMetadata(page.ref, withAppdata = False)
         page.commit = self._repo.show(page.rev)
         page.parentRev = self._repo.revParse(page.rev + '^')
@@ -266,8 +254,6 @@ class App:
         return render.refCommit(page = page)
 
     def _refBrowse(self, page):
-        page.breadcrumbs.append(Breadcrumb(None, 'tree'))
-
         ''' If no rev is provided, use HEAD of current ref '''
         if not page.rev:
             page.rev = page.ref
