@@ -1,13 +1,15 @@
 <%include file="partials/refApplication_header.html" />
 
 <article>
-% if page.appdata:
+% if page.metadata.description:
     <div class="refSummaryDesc">
-    ${page.appdata.description}
+    ${page.metadata.description}
     </div>
+%endif
 
+%if page.metadata.images:
     <div class="refSummaryScreenshots">
-    % for scrshot in page.appdata.images:
+    % for scrshot in page.metadata.images:
         <img src="${scrshot}" class="img-thumbnail center-block gallery-thumbnail" width="40%" />
     % endfor
     <div class="clearfix"></div>
@@ -23,8 +25,8 @@
 <article>
 <h2>Requirements</h2>
 <ul class="refSummaryReq">
-<li><strong>Runtime:</strong> <a href="?ref=${page.metadata.get('Application', 'runtime')}">${page.metadata.get('Application', 'runtime')}</a></li>
-<li><strong>SDK:</strong> <a href="?ref=${page.metadata.get('Application', 'runtime')}">${page.metadata.get('Application', 'sdk')}</a></li>
+<li><strong>Runtime:</strong> <a href="?ref=${page.metadata.runtime}">${page.metadata.runtime}</a></li>
+<li><strong>SDK:</strong> <a href="?ref=${page.metadata.sdk}">${page.metadata.sdk}</a></li>
 </ul>
 </article>
 

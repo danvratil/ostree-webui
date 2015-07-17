@@ -70,37 +70,50 @@ class Page:
         self.rev = None
         self.path = None
 
-class Appdata:
-    def __init__(self):
+class AppMetadata:
+    def __init__(self, ref, withAppdata = True):
+        self.ref = ref
         self.name = None
+        self.genericName = None
         self.description = None
-        self.homepage = None
+        self.categories = []
+        self.iconName = None
+        self.iconData = None
+        self.iconType = None
         self.help = None
         self.images = []
+        self.homepage = None
+        self.runtime = None
+        self.sdk = None
 
-class Breadcrumb:
-    def __init__(self, url, title):
-        self.url = url
-        self.title = title
+        self._repo = ostree.Repo(config.get('General', 'repo'))
 
-class AppBundle:
-    def __init__(self, ref):
-        repo = ostree.Repo(config.get('General', 'repo'))
-        files = repo.ls(ref, '/export/share/applications/%s.desktop' % ref.name)
+        self._populateFromMetadata()
+        self._populateFromDesktopFile()
+        if withAppdata:
+            self._populateFromAppdata()
+
+    def _populateFromMetadata(self):
+        metadata = stringToConfig(self._repo.cat(self.ref, '/metadata').decode('utf8'))
+        self.runtime = metadata.get('Application', 'runtime')
+        self.sdk = metadata.get('Application', 'sdk')
+
+    def _populateFromDesktopFile(self):
+        files = self._repo.ls(self.ref, '/export/share/applications/%s.desktop' % self.ref.name)
         if not files:
+            self.name = self.ref
             return
 
-        desktop = stringToConfig(repo.cat(ref, files[0].filePath).decode('utf8'), os.path.basename(files[0].filePath))
+        desktop = stringToConfig(self._repo.cat(self.ref, files[0].filePath).decode('utf8'), os.path.basename(files[0].filePath))
 
-        self.ref = ref
         self.name = desktop.get('Desktop Entry', 'Name')
         self.genericName = desktop.get('Desktop Entry', 'GenericName')
         self.categories = filter(None, desktop.get('Desktop Entry', 'categories').split(';'))
         self.iconName = desktop.get('Desktop Entry', 'Icon')
-        self.iconData = None
-        self.iconType = None
+        self._loadIcon()
 
-        icons = repo.ls(ref, '/export/share/icons', recursive = True)
+    def _loadIcon(self):
+        icons = self._repo.ls(self.ref, '/export/share/icons', recursive = True)
         iconsSizes = {}
         iconName = None
         for icon in icons:
@@ -118,7 +131,7 @@ class AppBundle:
             iconName = iconsSizes[sorted(iconsSizes)[-1]]
 
         if iconName:
-            rawIcon = repo.cat(ref, iconName)
+            rawIcon = self._repo.cat(self.ref, iconName)
             self.iconType = mimeTypeMagic.buffer(rawIcon)
             if self.iconType == 'application/x-gzip':
                 # TODO: Cache those icons
@@ -129,8 +142,60 @@ class AppBundle:
             if rawIcon:
                 self.iconData = b64encode(rawIcon)
 
-    def __repr__(self):
-        return 'AppBundle(%s)' % self.name
+    def _populateFromAppdata(self):
+        ls = self._repo.ls(self.ref, '/files/share/appdata')
+        appdataFile = None
+        for l in ls:
+            if l.type == ostree.FileEntry.File:
+                if l.fileName.endswith('.appdata.xml'):
+                    appdataFile = l.filePath
+                    break
+
+        if not appdataFile:
+            return
+
+        appdataXml = self._repo.cat(self.ref, appdataFile)
+        root = ET.fromstring(appdataXml)
+
+        find = ET.XPath('./name[lang("en")]', namespaces = { 'xml' : 'http://www.w3.org/XML/1998/namespace' })
+        self.name = find(root)[0].text
+
+        find = ET.XPath('./description')
+        results = find(root)
+        if results:
+            desc = results[0]
+            for d in desc.iter():
+                if '{http://www.w3.org/XML/1998/namespace}lang' in d.keys():
+                    d.getparent().remove(d)
+
+            find = ET.XPath('.//*[1]')
+            results = find(desc)
+            if results and results[0].tag == 'p':
+                results[0].set('class', 'lead')
+
+            find = ET.XPath('./*')
+            results = find(desc)
+            self.description = ''
+            for result in results:
+                self.description += ET.tostring(result)
+
+        find = ET.XPath('./url[@type="homepage"]')
+        results = find(root)
+        if results:
+            self.homepage = results[0].text
+        find = ET.XPath('./url[@type="help"]')
+        results = find(root)
+        if results:
+            self.help = results[0].text
+
+        find = ET.XPath("./screenshots/screenshot/image/text()")
+        self.images = find(root)
+
+
+class Breadcrumb:
+    def __init__(self, url, title):
+        self.url = url
+        self.title = title
 
 class App:
     def GET(self):
@@ -174,32 +239,26 @@ class App:
             if ref.type == ostree.Ref.Runtime:
                 page.runtimes.append(ref)
             else:
-                page.apps.append(AppBundle(ref))
+                page.apps.append(AppMetadata(ref, withAppdata = False))
 
         return render.refs(page = page)
 
     def _refSummary(self, page):
         page.breadcrumbs.append(Breadcrumb(None, 'summary'))
-
-        page.metadata = stringToConfig(self._repo.cat(page.ref, '/metadata'), 'metadata')
-        page.appdata = self._parseAppdata(page.ref)
-        page.bundle = AppBundle(page.ref)
+        page.metadata = AppMetadata(page.ref)
 
         return render.refSummary(page = page)
 
     def _refLog(self, page):
         page.breadcrumbs.append(Breadcrumb(None, 'log'))
-
-        page.metadata = stringToConfig(self._repo.cat(page.ref, '/metadata'), 'metadata')
-        page.appdata = self._parseAppdata(page.ref)
-        page.bundle = AppBundle(page.ref)
+        page.metadata = AppMetadata(page.ref, withAppdata = False)
         page.log = self._repo.log(page.ref)
 
         return render.refLog(page = page)
 
     def _refCommit(self, page):
         page.breadcrumbs.append(Breadcrumb(None, 'commit'))
-
+        page.metadata = AppMetadata(page.ref, withAppdata = False)
         page.commit = self._repo.show(page.rev)
         page.parentRev = self._repo.revParse(page.rev + '^')
         page.diff = self._repo.diff(page.rev)
@@ -216,66 +275,11 @@ class App:
         if not page.path:
             page.path = '/'
 
-        page.metadata = stringToConfig(self._repo.cat(page.ref, '/metadata'), 'metadata')
-        page.appdata = self._parseAppdata(page.ref)
-        page.bundle = AppBundle(page.ref)
+        page.metadata = AppMetadata(page.ref, withAppdata = False)
         page.listing = self._repo.ls(page.rev, page.path)
 
         return render.refBrowse(page = page)
 
-
-    def _parseAppdata(self, ref):
-        ls = self._repo.ls(ref, '/files/share/appdata')
-        appdataFile = None
-        for l in ls:
-            if l.type == ostree.FileEntry.File:
-                if l.fileName.endswith('.appdata.xml'):
-                    appdataFile = l.filePath
-                    break
-
-        if not appdataFile:
-            return None
-
-        appdataXml = self._repo.cat(ref, appdataFile)
-        root = ET.fromstring(appdataXml)
-
-        appdata = Appdata()
-
-        find = ET.XPath('./name[lang("en")]', namespaces = { 'xml' : 'http://www.w3.org/XML/1998/namespace' })
-        appdata.name = find(root)[0].text
-
-        find = ET.XPath('./description')
-        results = find(root)
-        if results:
-            desc = results[0]
-            for d in desc.iter():
-                if '{http://www.w3.org/XML/1998/namespace}lang' in d.keys():
-                    d.getparent().remove(d)
-
-            find = ET.XPath('.//*[1]')
-            results = find(desc)
-            if results and results[0].tag == 'p':
-                results[0].set('class', 'lead')
-
-            find = ET.XPath('./*')
-            results = find(desc)
-            appdata.description = ''
-            for result in results:
-                appdata.description += ET.tostring(result)
-
-        find = ET.XPath('./url[@type="homepage"]')
-        results = find(root)
-        if results:
-            appdata.homepage = results[0].text
-        find = ET.XPath('./url[@type="help"]')
-        results = find(root)
-        if results:
-            appdata.help = results[0].text
-
-        find = ET.XPath("./screenshots/screenshot/image/text()")
-        appdata.images = find(root)
-
-        return appdata
 
 
 if __name__ == "__main__":

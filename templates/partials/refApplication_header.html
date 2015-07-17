@@ -7,10 +7,10 @@ nav = [ [ 'browse', 'Browse' ],
 
 <div id="refAppHeader">
   <nav>
-    % if page.bundle.iconData:
-    <img src="data:${page.bundle.iconType if page.bundle.iconType else ''};base64,${page.bundle.iconData}" class="refSummaryLogo">
+    % if page.metadata.iconData:
+    <img src="data:${page.metadata.iconType if page.metadata.iconType else ''};base64,${page.metadata.iconData}" class="refSummaryLogo">
     % endif
-    <h1>${page.bundle.name} - <small>${page.bundle.genericName}</small></h1>
+    <a href="?ref=${page.ref}&amp;a=summary"><h1>${page.metadata.name} - <small>${page.metadata.genericName}</small></h1></a>
 
     <ul class="nav nav-tabs">
     % for action in nav:

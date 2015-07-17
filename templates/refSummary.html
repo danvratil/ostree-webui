@@ -1,10 +1,9 @@
 <%inherit file="base.html"/>
 
-<%! from time import strftime as time %>
+<% import ostree %>
 
-% if page.metadata.has_section('Application'):
+% if page.ref.type == ostree.Ref.Application:
     <%include file="refSummary_application.html"/>
-% elif page.metadata.has_section('Runtime'):
-    <h1>${page.metadata.get('Runtime', 'runtime')}</h1>
-    <em>SDK:</em> ${page.metadata.get('Runtime', 'sdk')}
+% elif page.ref.type == ostree.Ref.Runtime:
+    <%include file="refSummary_runtime.html"/>
 % endif

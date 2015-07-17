@@ -41,7 +41,7 @@ class Commit:
         self.rev = lines[0][7:]
         self.date = parser.parse(lines[1][7:])
         self.date = self.date.replace(tzinfo = None)
-        self.msg = '\n'.join(lines[3:])
+        self.message = '\n'.join(lines[3:])
 
 class Diff:
     Added = 1
@@ -60,7 +60,7 @@ class Diff:
         elif line.startswith('R'):
             self.mode = Diff.Removed
 
-        self.filePath = line.rsplit(' ', 2)[1]
+        self.filePath = line.rsplit(' ', 1)[1]
 
 class FileEntry:
     File = 1
@@ -142,7 +142,7 @@ class Repo:
         return rv
 
     def revParse(self, rev):
-        return Ref(self._cmd(['rev-parse', str(rev)]))
+        return self._cmd(['rev-parse', str(rev)])
 
     def cat(self, rev, path):
         return self._cmd(['cat', str(rev), path], decode = False)
@@ -167,7 +167,8 @@ class Repo:
         diff = self._cmd(['diff', str(rev)])
         rv = []
         for line in diff.split('\n'):
-            rv.append(Diff(line))
+            if line:
+                rv.append(Diff(line))
         return rv
 
     def ls(self, rev, path, recursive = False):
