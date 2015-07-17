@@ -239,13 +239,13 @@ class App:
     def _refSummary(self, page):
         page.metadata = AppMetadata(page.ref)
 
-        return render.refSummary(page = page)
+        return render.summary(page = page)
 
     def _refLog(self, page):
         page.metadata = AppMetadata(page.ref, withAppdata = False)
         page.log = self._repo.log(page.ref)
 
-        return render.refLog(page = page)
+        return render.log(page = page)
 
     def _refCommit(self, page):
         page.metadata = AppMetadata(page.ref, withAppdata = False)
@@ -253,7 +253,7 @@ class App:
         page.parentRev = self._repo.revParse(page.rev + '^')
         page.diff = self._repo.diff(page.rev)
 
-        return render.refCommit(page = page)
+        return render.commit(page = page)
 
     def _refBrowse(self, page):
         ''' If no rev is provided, use HEAD of current ref '''
@@ -266,7 +266,7 @@ class App:
         page.metadata = AppMetadata(page.ref, withAppdata = False)
         page.listing = self._repo.ls(page.rev, page.path)
 
-        return render.refBrowse(page = page)
+        return render.browser(page = page)
 
     def _refBlob(self, page):
         page.metadata = AppMetadata(page.ref, withAppdata = False)
@@ -290,7 +290,7 @@ class App:
         else:
             page.fileContents = None
 
-        return render.refBlob(page = page)
+        return render.blob(page = page)
 
 if __name__ == "__main__":
     app.run()

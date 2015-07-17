@@ -2,10 +2,14 @@
 
 <%
 from time import strftime as time
-import ostree 
+import ostree
 %>
 
-<%include file="partials/refApplication_header.html" />
+% if page.ref.type == ostree.Ref.Application:
+    <%include file="partials/application_header.html" />
+% else:
+    <%include file="partials/runtime_header.html" />
+% endif
 
 <h2>Commit ${page.commit.rev}</h2>
 <strong>Date:</strong> ${page.commit.date | time}<br/>

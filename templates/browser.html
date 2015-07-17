@@ -1,10 +1,14 @@
 <%inherit file="base.html"/>
 
-<%! import ostree %>
+<% import ostree %>
 
-<%include file="partials/refApplication_header.html" />
+% if page.ref.type == ostree.Ref.Application:
+    <%include file="partials/application_header.html" />
+% else:
+    <%include file="partials/runtime_header.html" />
+% endif
 
-<%include file="partials/refBrowser_navigation.html" />
+<%include file="partials/browser_navigation.html" />
 
 <table class="table">
 <tr>
