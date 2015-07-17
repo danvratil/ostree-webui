@@ -1,0 +1,19 @@
+<%
+nav = [ [ [ 'browse', 'blob' ], 'Browse' ],
+        [ [ 'log', 'commit' ], 'History' ],
+        [ [ 'summary' ], 'Summary' ] ]
+%>
+
+
+<div id="refAppHeader">
+  <nav>
+    <a href="?runtime=${page.runtime}&amp;a=summary"><h1>${page.runtime}</h1></a>
+
+    <ul class="nav nav-tabs">
+    % for action in nav:
+      <li role="presentation" ${ 'class="active"' if page.action in action[0] else '' }><a href="?ref=${page.ref}&amp;a=${action[0][0]}">${action[1]}</a></li>
+    % endfor
+    </ul>
+  </nav>
+  <div class="clearfix"></div>
+</div>

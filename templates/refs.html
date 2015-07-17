@@ -25,11 +25,38 @@
 </div>
 
 <h1>Runtimes</h1>
-<table>
+<div class="list-group">
 % for runtime in page.runtimes:
-    <tr><td><a href="?ref=${runtime}&amp;a=summary">${runtime.name}</td>
-        <td>${runtime.arch}</td>
-        <td>${runtime.branch}</td>
-    </tr>
+    <a class="list-group-item" role="button" data-toggle="collapse" href="#collapse-${runtime.name.replace('.', '-')}">${runtime.name}</a>
+    <div class="collapse" id="collapse-${runtime.name.replace('.', '-')}">
+      <div class="well">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="panel panel-default">
+              <div class="panel-heading"><h3 class="panel-title">Platform</h3></div>
+              <div class="panel-body">
+                <ul>
+                % for arch, version in page.platformVersions[runtime.name]:
+                  <li><a href="?ref=runtime/${runtime.name}.Platform/${arch}/${version}">${arch}/${version}</a></li>
+                % endfor
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="panel panel-default">
+              <div class="panel-heading"><h3 class="panel-title">SDK</h3></div>
+              <div class="panel-body">
+                <ul>
+                % for arch, version in page.sdkVersions[runtime.name]:
+                  <li><a href="?ref=runtime/${runtime.name}.Sdk/${arch}/${version}">${arch}/${version}</a></li>
+                % endfor
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 % endfor
-</ul>
+</div>

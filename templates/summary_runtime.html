@@ -1,0 +1,23 @@
+<%include file="partials/runtime_header.html" />
+
+##% if page.metadata.description:
+##    <div class="refSummaryDesc">
+##    ${page.metadata.description}
+##    </div>
+##%endif
+
+<div class="row">
+  <div class="col-md-4">
+    <h2>Locales</h2>
+    <table>
+    % for ref in sorted(page.locales):
+      <% lang = ref.rsplit('.', 1)[-1]
+      <tr>
+        <td>${lang}</td>
+        <td><a href="?runtime=${page.runtime}&amp;t=platform&amp;l=${lang}&amp;v=${page.version or ''}">Platform</a> |
+            <a href="?runtime=${page.runtime}&amp;t=sdk&amp;l=${lang}&amp;v=${page.version or ''}">Sdk</a></td>
+      </tr>
+    % endfor
+    </table>
+  </div>
+</div>

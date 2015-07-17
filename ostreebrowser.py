@@ -64,6 +64,7 @@ class Page:
         self.title = config.get('General', 'title')
         self.logo = config.get('General', 'logo')
 
+        self.runtime = None
         self.ref = None
         self.action = None
         self.rev = None
@@ -191,6 +192,11 @@ class AppMetadata:
         self.images = find(root)
 
 
+class MetaRuntime:
+    def __init__(self, ref):
+        self.ref = ref
+        self.name = ref.name.rsplit('.', 1)[0]
+
 class App:
     def GET(self):
         query = urlparse.parse_qs(web.ctx.query[1:])
@@ -208,11 +214,14 @@ class App:
         if 'path' in query:
             page.path = query['path'][0]
 
-        if not page.ref:
-            return self._listRefs(page);
+        if not page.ref and not page.runtime:
+            return self.refs(page);
         else:
             if not page.action or page.action == 'summary':
-                return self._summary(page)
+                if page.ref.type == ostree.Ref.Runtime:
+                    return self._runtimeSummary(page)
+                else:
+                    return self._appSummary(page)
             elif page.action == 'log':
                 return self._log(page)
             elif page.action == 'browse':
@@ -224,19 +233,48 @@ class App:
 
         raise web.seeother('/')
 
-    def _listRefs(self, page):
+    def refs(self, page):
         page.runtimes = []
         page.apps = []
+        page.platformVersions = {}
+        page.sdkVersions = {}
+
         for ref in self._repo.refs():
             if ref.type == ostree.Ref.Runtime:
-                page.runtimes.append(ref)
+                if ref.name.endswith('.Platform'):
+                    meta = MetaRuntime(ref)
+                    page.runtimes.append(meta)
+                    page.platformVersions[meta.name] = (page.platformVersions[meta.name] if meta.name in page.platformVersions else []) + [(ref.arch, ref.branch)]
+                elif ref.name.endswith('.Sdk'):
+                    meta = MetaRuntime(ref)
+                    page.sdkVersions[meta.name] = (page.sdkVersions[meta.name] if meta.name in page.sdkVersions else []) + [(ref.arch, ref.branch)]
+
             else:
                 page.apps.append(AppMetadata(ref, withAppdata = False))
-
+        print page.runtimes
         return render.refs(page = page)
 
-    def _summary(self, page):
+    def _appSummary(self, page):
         page.metadata = AppMetadata(page.ref)
+
+        return render.summary(page = page)
+
+    def _runtimeSummary(self, page):
+        page.locales = []
+        page.var = {}
+
+        for ref in self._repo.refs():
+            if ref.type == ostree.Ref.Application:
+                continue
+
+            if not ref.name.startswith(page.ref.name):
+                continue
+
+            if page.ref.branch and not page.ref.branch == ref.branch:
+                continue
+
+            if ref.name.startswith(page.ref.name + '.Locale'):
+                page.locales.append(ref.name)
 
         return render.summary(page = page)
 

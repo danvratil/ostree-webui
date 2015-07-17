@@ -11,6 +11,7 @@
         });
     });
 
+    // Install bootstrap handlers
     $('[data-toggle="tooltip"]').tooltip();
 
     $('.browser-icon').hover(

@@ -2,8 +2,8 @@
 
 <% import ostree %>
 
-% if page.ref.type == ostree.Ref.Application:
-    <%include file="summary_application.html"/>
-% elif page.ref.type == ostree.Ref.Runtime:
-    <%include file="summary_runtime.html"/>
+% if page.runtime or page.ref.type == ostree.Ref.Runtime:
+    <%include file="summary_runtime.html" />
+% else:
+    <%include file="summary_application.html" />
 % endif
