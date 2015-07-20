@@ -100,7 +100,8 @@ article {
     height: 250px;
     float: left;
     text-align: center;
-    border: 1px solid black;
+    border: 1px solid #DDD;
+    border-radius: 4px;
     margin: 5px;
     padding: 0;
     text-decoration: none;
@@ -109,8 +110,8 @@ article {
 
 .refTile:hover {
     text-decoration: none;
-    background: #337AB7;
-    color: #FFF;
+    background: #EEEEEE;
+    color: #337AB7;
 }
 
 .refTileContent {
@@ -232,3 +233,4 @@ pre.with-line-numbers .cl {
     display: inline-block;
     line-height: 34px;
 }
+
