@@ -7,7 +7,7 @@ nav = [ [ [ 'browse', 'blob' ], 'Browse' ],
 
 <div id="refAppHeader">
   <nav>
-    <a href="?runtime=${page.runtime}&amp;a=summary"><h1>${page.runtime}</h1></a>
+    <a href="?ref=${page.ref}&amp;a=summary"><h1>${page.ref.name}/${page.ref.arch}/${page.ref.branch}</h1></a>
 
     <ul class="nav nav-tabs">
     % for action in nav:

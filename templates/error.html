@@ -1,0 +1,17 @@
+<%inherit file="base.html"/>
+
+<%
+import ostree
+%>
+
+% if page.ref.type == ostree.Ref.Application:
+    <%include file="partials/application_header.html" />
+% else:
+    <%include file="partials/runtime_header.html" />
+% endif
+
+<br/>
+<div class="alert alert-danger">${page.error}</div>
+<button type="button" class="btn btn-primary" onclick="window.history.go(-1)">
+  <span class=" glyphicon glyphicon-arrow-left"></span> Back
+</button>

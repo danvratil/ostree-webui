@@ -1,23 +1,59 @@
 <%include file="partials/runtime_header.html" />
 
-##% if page.metadata.description:
-##    <div class="refSummaryDesc">
-##    ${page.metadata.description}
-##    </div>
-##%endif
+<article>
+
+<table class="table table-borderless">
+<tr><th>Platform:</th><td width="100%"><a href="?ref=${page.basePlatform}">${page.basePlatform}</a></td></tr>
+<tr><th>SDK:</th><td><a href="?ref=${page.baseSdk}">${page.baseSdk}</a></td></tr>
+</table>
+</article>
 
 <div class="row">
   <div class="col-md-4">
-    <h2>Locales</h2>
-    <table>
-    % for ref in sorted(page.locales):
-      <% lang = ref.rsplit('.', 1)[-1]
-      <tr>
-        <td>${lang}</td>
-        <td><a href="?runtime=${page.runtime}&amp;t=platform&amp;l=${lang}&amp;v=${page.version or ''}">Platform</a> |
-            <a href="?runtime=${page.runtime}&amp;t=sdk&amp;l=${lang}&amp;v=${page.version or ''}">Sdk</a></td>
-      </tr>
-    % endfor
-    </table>
+    <div class="panel panel-default">
+      <div class="panel-heading"><h3 class="panel-title">Locales</h3></div>
+      <div class="panel-body">
+        <table class="table table-striped">
+          % for lang in sorted(page.locales.keys()):
+            <% platformRef, sdkRef = page.locales[lang] %>
+            <tr \
+              % if (platformRef and page.ref.name == platformRef.name) or (sdkRef and page.ref.name == sdkRef.name):
+                class="bold"
+              % endif
+            >
+              <td width="100%">${lang}</td>
+              <td> \
+              % if platformRef:
+                <a href="?ref=${platformRef}">Platform</a>
+              % endif
+              </td>
+              <td> \
+              % if sdkRef:
+                <a href="?ref=${sdkRef}">Sdk</a>
+              % endif
+              </td>
+            </tr>
+          % endfor
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="panel panel-default">
+      <div class="panel-heading"><h3 class="panel-title">Versions</h3></div>
+      <div class="panel-body">
+        <table class="table table-striped">
+          % for version in sorted(page.versions):
+            <tr \
+              % if "%s/%s" % (page.ref.arch, page.ref.branch) == version:
+                class="bold"
+              % endif
+            >
+              <td><a href="?ref=runtime/${page.ref.name}/${version}">${version}</a></td>
+            </tr>
+          % endfor
+          </table>
+      </div>
+    </div>
   </div>
 </div>

@@ -26,11 +26,15 @@
     <td class="browserTableSize">${l.size} bytes</td>
     <td>
       % if l.type == ostree.FileEntry.Dir:
-      <a href="?ref=${page.ref}&amp;a=browse&amp;rev=${page.rev}&amp;path=${l.filePath}" class="glyphicon glyphicon-folder-close browser-icon">
+        <a href="?ref=${page.ref}&amp;a=browse&amp;rev=${page.rev}&amp;path=${l.filePath}" class="glyphicon glyphicon-folder-close browser-icon">&nbsp;${l.fileName}</a> \
+      % elif l.type == ostree.FileEntry.File:
+        <a href="?ref=${page.ref}&amp;a=blob&amp;rev=${page.rev}&amp;path=${l.filePath}" class="glyphicon glyphicon-file">&nbsp;${l.fileName}</a>
       % else:
-        <a href="?ref=${page.ref}&amp;a=blob&amp;rev=${page.rev}&amp;path=${l.filePath}" class="glyphicon glyphicon-file">
+        <span class="glyphicon glyphicon-folder-close">&nbsp;${l.fileName}</span> \
       %endif
-      ${l.fileName}</a>
+      % if l.linkDest:
+        -&gt; <a href="?ref=${page.ref}&amp;a=blob&amp;rev=${page.rev}&amp;path=${l.linkDest}">${l.linkDest}</a>
+      % endif
     </td>
   </tr>
 % endfor

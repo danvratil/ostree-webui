@@ -70,7 +70,7 @@ class FileEntry:
     def __init__(self, line):
         line = line.strip()
         lcols = line.split(' ', 3)
-        rcols = line.rsplit(' ', 2)
+        rcols = line.rsplit(' ', 4)
 
         if len(lcols) < 3:
             raise ParseException('Unexpected file entry format')
@@ -98,8 +98,15 @@ class FileEntry:
 
         self.uid = int(lcols[1])
         self.gid = int(lcols[2])
-        self.size = int(rcols[1])
-        self.filePath = rcols[2]
+        if self.type == FileEntry.Symlink:
+            self.size = int(rcols[1])
+            self.filePath = rcols[2]
+            self.linkDest = os.path.abspath(os.path.join(os.path.dirname(self.filePath) + '/', rcols[4]))
+        else:
+            self.size = int(rcols[3])
+            self.filePath = rcols[4]
+            self.linkDest = None
+
         self.fileName = os.path.basename(self.filePath)
 
 class Ref:

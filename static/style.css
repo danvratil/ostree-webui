@@ -7,6 +7,15 @@ body {
     vertical-align: middle;
 }
 
+.table .bold td {
+    font-weight: bold;
+}
+
+table.table-borderless tbody>tr>th,
+table.table-borderless tbody>tr>td {
+    border: 0;
+}
+
 .container-wrapper {
     margin: 5px;
 }

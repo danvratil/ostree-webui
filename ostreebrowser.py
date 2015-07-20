@@ -21,6 +21,7 @@
 
 import web, web.template
 from web.contrib.template import render_mako
+from mako import exceptions
 
 import ConfigParser
 import urlparse
@@ -29,6 +30,7 @@ import magic
 import lxml.etree as ET
 from magic import *
 from base64 import b64encode
+from copy import *
 
 import ostree
 from utils import *
@@ -191,8 +193,7 @@ class AppMetadata:
         find = ET.XPath("./screenshots/screenshot/image/text()")
         self.images = find(root)
 
-
-class MetaRuntime:
+class RuntimeMetadata:
     def __init__(self, ref):
         self.ref = ref
         self.name = ref.name.rsplit('.', 1)[0]
@@ -233,6 +234,10 @@ class App:
 
         raise web.seeother('/')
 
+    @staticmethod
+    def _refMetadata(ref, withAppdata = False):
+        return AppMetadata(ref, withAppdata) if ref.type == ostree.Ref.Application else RuntimeMetadata(ref)
+
     def refs(self, page):
         page.runtimes = []
         page.apps = []
@@ -241,56 +246,101 @@ class App:
 
         for ref in self._repo.refs():
             if ref.type == ostree.Ref.Runtime:
+                meta = RuntimeMetadata(ref)
                 if ref.name.endswith('.Platform'):
-                    meta = MetaRuntime(ref)
                     page.runtimes.append(meta)
                     page.platformVersions[meta.name] = (page.platformVersions[meta.name] if meta.name in page.platformVersions else []) + [(ref.arch, ref.branch)]
                 elif ref.name.endswith('.Sdk'):
-                    meta = MetaRuntime(ref)
                     page.sdkVersions[meta.name] = (page.sdkVersions[meta.name] if meta.name in page.sdkVersions else []) + [(ref.arch, ref.branch)]
 
             else:
                 page.apps.append(AppMetadata(ref, withAppdata = False))
-        print page.runtimes
-        return render.refs(page = page)
+
+        try:
+            return render.refs(page = page)
+        except:
+            return exceptions.text_error_template().render()
 
     def _appSummary(self, page):
         page.metadata = AppMetadata(page.ref)
 
-        return render.summary(page = page)
+        try:
+            return render.summary(page = page)
+        except:
+            return exceptions.text_error_template().render()
 
     def _runtimeSummary(self, page):
-        page.locales = []
+        page.locales = {}
+        page.versions = []
         page.var = {}
 
+        if '.Platform' in page.ref.name:
+            baseref = page.ref.name.split('.Platform')[0]
+            refType = 'Platform'
+        else:
+            baseref = page.ref.name.split('.Sdk')[0]
+            refType = 'Sdk'
+
+        page.basePlatform = ostree.Ref('runtime/%s.Platform/%s/%s' % (baseref, page.ref.arch, page.ref.branch))
+        page.baseSdk = ostree.Ref('runtime/%s.Sdk/%s/%s' % (baseref, page.ref.arch, page.ref.branch))
+
+        refs = {}
         for ref in self._repo.refs():
+            refs[ref.name] = ref
+
+        for refName, ref in refs.iteritems():
             if ref.type == ostree.Ref.Application:
                 continue
 
-            if not ref.name.startswith(page.ref.name):
+            if not refName.startswith(baseref):
                 continue
 
-            if page.ref.branch and not page.ref.branch == ref.branch:
-                continue
+            if not '%s/%s' % (ref.arch, ref.branch) in page.versions:
+                page.versions.append('%s/%s' % (ref.arch, ref.branch))
 
-            if ref.name.startswith(page.ref.name + '.Locale'):
-                page.locales.append(ref.name)
+            if refName.startswith(baseref + '.Platform.Locale') or refName.startswith(baseref + '.Sdk.Locale'):
+                if '.Platform' in ref.name:
+                    platform = ref
+                    sdkRefName = platform.name.replace('.Platform', '.Sdk')
+                    if sdkRefName in refs.keys():
+                        sdk = refs[sdkRefName]
+                    else:
+                        sdk = None
+                else:
+                    sdk = ref
+                    platformRefName = sdk.name.replace('.Sdk', '.Platform')
+                    if platformRefName in refs.keys():
+                        platform = refs[platformRefName]
+                    else:
+                        platform = None
 
-        return render.summary(page = page)
+                page.locales[ref.name.rsplit('.', 1)[-1]] = (platform, sdk)
+
+        try:
+            return render.summary(page = page)
+        except:
+            return exceptions.text_error_template().render()
+
 
     def _log(self, page):
-        page.metadata = AppMetadata(page.ref, withAppdata = False)
+        page.metadata = App._refMetadata(page.ref)
         page.log = self._repo.log(page.ref)
 
-        return render.log(page = page)
+        try:
+            return render.log(page = page)
+        except:
+            return exceptions.text_error_template().render()
 
     def _commit(self, page):
-        page.metadata = AppMetadata(page.ref, withAppdata = False)
+        page.metadata = App._refMetadata(page.ref)
         page.commit = self._repo.show(page.rev)
         page.parentRev = self._repo.revParse(page.rev + '^')
         page.diff = self._repo.diff(page.rev)
 
-        return render.commit(page = page)
+        try:
+            return render.commit(page = page)
+        except:
+            return exceptions.text_error_template().render()
 
     def _browse(self, page):
         ''' If no rev is provided, use HEAD of current ref '''
@@ -300,20 +350,24 @@ class App:
         if not page.path:
             page.path = '/'
 
-        page.metadata = AppMetadata(page.ref, withAppdata = False)
+        page.metadata = App._refMetadata(page.ref)
         page.listing = self._repo.ls(page.rev, page.path)
 
-        return render.browser(page = page)
+        try:
+            return render.browser(page = page)
+        except:
+            return exceptions.text_error_template().render()
 
     def _blob(self, page):
-        page.metadata = AppMetadata(page.ref, withAppdata = False)
+        page.metadata = App._refMetadata(page.ref)
         files = self._repo.ls(page.rev, page.path)
         if not files:
-            raise web.seeother('?ref=' + page.ref)
+            page.error = "No such file or directory '%s'" % page.path
+            return render.error(page = page)
 
         filedesc = files[0]
         if filedesc.type == ostree.FileEntry.Dir:
-            raise web.seeother('?ref=' + page.ref + '&a=browse&rev=' + page.rev + '&path=' + page.path)
+            raise web.seeother('?ref=' + str(page.ref) + '&a=browse&rev=' + page.rev + '&path=' + page.path)
 
         rawdata = self._repo.cat(page.rev, page.path)
         page.mimetype = mimeTypeMagic.buffer(rawdata)
@@ -327,7 +381,10 @@ class App:
         else:
             page.fileContents = None
 
-        return render.blob(page = page)
+        try:
+            return render.blob(page = page)
+        except:
+            return exceptions.text_error_template().render()
 
 if __name__ == "__main__":
     app.run()
