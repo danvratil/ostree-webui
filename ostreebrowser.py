@@ -47,7 +47,7 @@ defaultConfig = {
 }
 
 config = ConfigParser.ConfigParser(defaults = defaultConfig, allow_no_value = True)
-config.read('ostreebrowser.cfg')
+config.read('config.ini')
 
 mimeTypeMagic = magic.open(magic.MAGIC_MIME_TYPE)
 mimeTypeMagic.load()

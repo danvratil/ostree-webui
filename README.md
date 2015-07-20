@@ -16,5 +16,5 @@ The application is inspired by GitPHP, but it's written in Python using WebPy
 
 ## Configuration
 
-Make sure to configure the path to the OSTree repository in ostreebrowser.cfg
+Make sure to configure the path to the OSTree repository in config.ini
 
