@@ -9,7 +9,15 @@
 % endif
 
 <%include file="partials/browser_navigation.html" />
-<p><strong>Size:</strong> ${page.size} bytes | <strong>MimeType:</strong> ${page.mimetype}</p>
+<div class="browserToolbar">
+  <span class="info">
+    <strong>Size:</strong> ${page.size} bytes | <strong>MimeType:</strong> ${page.mimetype}
+  </span>
+  <a role="button" class="btn btn-primary pull-right" href="?ref=${page.ref}&amp;a=raw&amp;rev=${page.rev}&amp;path=${page.path}">
+    <span class="glyphicon glyphicon-download"></span> Download
+  </a>
+  <div class="clearfix"></div>
+</div>
 
 % if page.isText:
 <pre class="with-line-numbers"><code>\

@@ -222,3 +222,13 @@ pre.with-line-numbers .cl {
 .blobImage:hover {
     background: #FFF;
     border: 1px solid #CCC;
+}
+
+.browserToolbar {
+    margin: 10px 0;
+}
+
+.browserToolbar span.info {
+    display: inline-block;
+    line-height: 34px;
+}

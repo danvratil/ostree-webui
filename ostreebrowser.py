@@ -231,6 +231,8 @@ class App:
                 return self._commit(page)
             elif page.action == 'blob' and page.rev and page.path:
                 return self._blob(page)
+            elif page.action == 'raw' and page.rev and page.path:
+                return self._raw(page)
 
         raise web.seeother('/')
 
@@ -385,6 +387,16 @@ class App:
             return render.blob(page = page)
         except:
             return exceptions.text_error_template().render()
+
+    def _raw(self, page):
+        rawdata = self._repo.cat(page.rev, page.path)
+        if not rawdata:
+            page.error = "No such file or directory '%s'" % page.path
+            return render.error(page = page)
+
+        web.header('Content-Type', mimeTypeMagic.buffer(rawdata) or 'application/octet-stream')
+        web.header('Content-Disposition', 'attachment; filename=%s' % os.path.basename(page.path))
+        return rawdata
 
 if __name__ == "__main__":
     app.run()
