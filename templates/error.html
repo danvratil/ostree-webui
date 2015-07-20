@@ -4,10 +4,12 @@
 import ostree
 %>
 
-% if page.ref.type == ostree.Ref.Application:
-    <%include file="partials/application_header.html" />
-% else:
-    <%include file="partials/runtime_header.html" />
+% if page.ref:
+    % if page.ref.type == ostree.Ref.Application:
+        <%include file="partials/application_header.html" />
+    % else:
+        <%include file="partials/runtime_header.html" />
+    % endif
 % endif
 
 <br/>

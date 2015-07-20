@@ -215,24 +215,32 @@ class App:
         if 'path' in query:
             page.path = query['path'][0]
 
-        if not page.ref and not page.runtime:
-            return self.refs(page);
-        else:
-            if not page.action or page.action == 'summary':
-                if page.ref.type == ostree.Ref.Runtime:
-                    return self._runtimeSummary(page)
-                else:
-                    return self._appSummary(page)
-            elif page.action == 'log':
-                return self._log(page)
-            elif page.action == 'browse':
-                return self._browse(page)
-            elif page.action == 'commit' and page.rev:
-                return self._commit(page)
-            elif page.action == 'blob' and page.rev and page.path:
-                return self._blob(page)
-            elif page.action == 'raw' and page.rev and page.path:
-                return self._raw(page)
+        try:
+            if not page.ref and not page.runtime:
+                return self.refs(page);
+            else:
+                if not page.action or page.action == 'summary':
+                    if page.ref.type == ostree.Ref.Runtime:
+                        return self._runtimeSummary(page)
+                    else:
+                        return self._appSummary(page)
+                elif page.action == 'log':
+                    return self._log(page)
+                elif page.action == 'browse':
+                    return self._browse(page)
+                elif page.action == 'commit' and page.rev:
+                    return self._commit(page)
+                elif page.action == 'blob' and page.rev and page.path:
+                    return self._blob(page)
+                elif page.action == 'raw' and page.rev and page.path:
+                    return self._raw(page)
+        except web.seeother as e:
+            raise;
+        except Exception as e:
+            page.error = str(e);
+            if not page.error:
+                page.error = "Unknown error";
+            return render.error(page = page)
 
         raise web.seeother('/')
 
